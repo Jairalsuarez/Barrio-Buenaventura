@@ -20,6 +20,7 @@ self.addEventListener('fetch', (event) => {
     )
     return
   }
+  if (!request.url.startsWith('http')) return
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request).then((response) => {

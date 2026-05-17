@@ -272,7 +272,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
       ) : (
         <div className="space-y-2.5">
           {eventos.map((ev, i) => (
-            <button key={ev.id} onClick={() => setEventoSeleccionado(ev)} className="w-full text-left">
+            <div key={ev.id} onClick={() => setEventoSeleccionado(ev)} className="w-full text-left cursor-pointer">
               <Card className="!p-4 flex items-start gap-3 relative overflow-hidden animate-fade-up hover:shadow-md dark:hover:shadow-slate-900/50 transition-shadow" style={{ animationDelay: `${i * 0.08}s` }}>
                 <span className="flex-shrink-0 mt-0.5 flex items-center justify-center w-7 h-7 rounded-lg bg-church-50 dark:bg-church-950 text-church-500 dark:text-church-400"><Icon size={18}>{getEventIconName(ev.nombre)}</Icon></span>
                 <div className="flex-1 min-w-0">
@@ -296,7 +296,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
                   </button>
                 )}
               </Card>
-            </button>
+            </div>
           ))}
         </div>
       )}

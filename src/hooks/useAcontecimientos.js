@@ -21,7 +21,6 @@ export function useAcontecimientos(userId) {
 
   useEffect(() => {
     mounted.current = true
-    setLoading(true); 
     cargar()
       .then(data => { if (mounted.current) { setEventos(data); setLoading(false) } })
       .catch(err => { if (mounted.current) { setError(err.message); setLoading(false) } })

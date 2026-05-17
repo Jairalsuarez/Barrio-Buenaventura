@@ -58,13 +58,17 @@ export function usePushNotifications(userId) {
     })
 
     const json = sub.toJSON()
-    await supabase.from('push_subscriptions').upsert({
-      usuario_id: userId,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-      user_agent: navigator.userAgent,
-    }, { onConflict: 'usuario_id' })
+    try {
+      await supabase.from('push_subscriptions').upsert({
+        usuario_id: userId,
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        user_agent: navigator.userAgent,
+      }, { onConflict: 'usuario_id' })
+    } catch (e) {
+      console.warn('Error guardando suscripción push:', e)
+    }
 
     setSubscribed(true)
   }, [userId])
