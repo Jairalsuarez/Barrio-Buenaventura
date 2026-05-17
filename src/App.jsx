@@ -42,10 +42,11 @@ export default function App() {
   }, [])
 
   const autenticado = !!user || guest
-  const datosListos = autenticado && !cumpleanos.loading && !acontecimientos.loading
+  const datosListos = !cumpleanos.loading && !acontecimientos.loading
 
   useEffect(() => {
-    if (splashDone.current || !datosListos) return
+    if (splashDone.current) return
+    if (!datosListos) return
     splashDone.current = true
     const splash = document.getElementById('splash')
     if (!splash) return
@@ -53,6 +54,19 @@ export default function App() {
     splash.style.opacity = '0'
     setTimeout(() => splash.remove(), 550)
   }, [datosListos])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (splashDone.current) return
+      splashDone.current = true
+      const splash = document.getElementById('splash')
+      if (!splash) return
+      splash.style.transition = 'opacity 0.5s ease-out'
+      splash.style.opacity = '0'
+      setTimeout(() => splash.remove(), 550)
+    }, 8000)
+    return () => clearTimeout(timer)
+  }, [])
 
   if (authLoading && !autenticado) {
     return (
