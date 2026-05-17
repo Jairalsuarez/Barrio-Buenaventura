@@ -6,21 +6,30 @@ import Button from './ui/Button'
 import Input from './ui/Input'
 import Spinner from './ui/Spinner'
 import { useAcontecimientos } from '../hooks/useAcontecimientos'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 
-function NotificationPrompt({ onAccept, onDismiss }) {
+function NotificationPrompt({ onAccept, onDismiss, subscribed }) {
   return (
     <div className="bg-church-50 dark:bg-slate-800 border border-church-200 dark:border-slate-700 rounded-2xl p-5 text-center">
       <div className="w-12 h-12 bg-church-100 dark:bg-church-900 rounded-full flex items-center justify-center mx-auto mb-3">
         <svg className="w-6 h-6 text-church-600 dark:text-church-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 018 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
         </svg>
       </div>
-      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">¿Quieres recibir notificaciones?</h3>
-      <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Te avisaremos cuando haya nuevos eventos en el barrio.</p>
-      <div className="flex gap-2 justify-center">
-        <Button variant="primary" onClick={onAccept}>Activar notificaciones</Button>
-        <Button variant="ghost" onClick={onDismiss}>Ahora no</Button>
-      </div>
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+        {subscribed ? 'Notificaciones activadas' : '¿Quieres recibir notificaciones?'}
+      </h3>
+      <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+        {subscribed
+          ? 'Recibirás avisos cuando haya nuevos eventos.'
+          : 'Te avisaremos cuando haya nuevos eventos en el barrio.'}
+      </p>
+      {!subscribed && (
+        <div className="flex gap-2 justify-center">
+          <Button variant="primary" onClick={onAccept}>Activar notificaciones</Button>
+          <Button variant="ghost" onClick={onDismiss}>Ahora no</Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -28,19 +37,15 @@ function NotificationPrompt({ onAccept, onDismiss }) {
 export default function AgendaAcontecimientos({ userId, isPredefinido, data: externData }) {
   const hookData = useAcontecimientos(userId)
   const { eventos, loading, error, crear, eliminar } = externData ?? hookData
+  const { subscribed, subscribe } = usePushNotifications(userId)
   const [notifAsked, setNotifAsked] = useState(false)
-  const [notifGranted, setNotifGranted] = useState(() => typeof Notification !== 'undefined' && Notification.permission === 'granted')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', fecha_hora: '' })
   const [creando, setCreando] = useState(false)
 
   function handleNotifAccept() {
-    if ('Notification' in window) {
-      Notification.requestPermission().then(perm => {
-        setNotifGranted(perm === 'granted')
-        setNotifAsked(true)
-      })
-    }
+    subscribe()
+    setNotifAsked(true)
   }
 
   function handleNotifDismiss() {
@@ -51,7 +56,18 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
     e.preventDefault()
     if (!form.nombre.trim() || !form.fecha_hora) return
     setCreando(true)
-    await crear(form.nombre, form.fecha_hora)
+    try {
+      await crear(form.nombre, form.fecha_hora)
+      fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Nuevo evento',
+          body: form.nombre.trim(),
+          url: '/',
+        }),
+      }).catch(() => {})
+    } catch {}
     setForm({ nombre: '', fecha_hora: '' })
     setShowForm(false)
     setCreando(false)
@@ -80,8 +96,8 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
         )}
       </div>
 
-      {notifAsked === false && !notifGranted && (
-        <NotificationPrompt onAccept={handleNotifAccept} onDismiss={handleNotifDismiss} />
+      {notifAsked === false && typeof Notification !== 'undefined' && Notification.permission !== 'denied' && (
+        <NotificationPrompt onAccept={handleNotifAccept} onDismiss={handleNotifDismiss} subscribed={subscribed} />
       )}
 
       {showForm && isPredefinido && (
