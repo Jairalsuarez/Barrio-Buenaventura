@@ -1,203 +1,268 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 import Button from './ui/Button'
 import Input from './ui/Input'
 import Select from './ui/Select'
 import { LLAMAMIENTOS, esLlamamientoPredefinido } from '../lib/session'
-import { validarNombre, validarTelefono, validarLlamamientoPersonalizado, sanitizarNombre } from '../lib/validacion'
+import { validarNombreCompleto, validarTelefono, validarLlamamientoPersonalizado, sanitizarNombre } from '../lib/validacion'
 
-function validarFormulario(datos) {
-  const errores = {}
-  const errNombre = validarNombre(datos.nombre, 'nombre')
-  if (errNombre) errores.nombre = errNombre
-  const errApellido = validarNombre(datos.apellido, 'apellido')
-  if (errApellido) errores.apellido = errApellido
-  if (!datos.fecha_nacimiento) errores.fecha_nacimiento = 'La fecha de nacimiento es obligatoria'
-  if (datos.llamamiento && esLlamamientoPredefinido(datos.llamamiento)) {
-    const errTel = validarTelefono(datos.telefono)
-    if (errTel) errores.telefono = errTel
-  }
-  if (datos.llamamiento === 'Otro') {
-    const errLlam = validarLlamamientoPersonalizado(datos.llamamiento_personalizado)
-    if (errLlam) errores.llamamiento_personalizado = errLlam
-  }
-  return errores
-}
-
-export default function AuthModal({ onRegister, onGuest, loading, error }) {
+export default function AuthModal({ onRegister, onLoginExisting, onGuest, loading, error }) {
+  const [step, setStep] = useState('nombre')
+  const [nombreCompleto, setNombreCompleto] = useState('')
+  const [nombre, setNombre] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [tieneLlamamiento, setTieneLlamamiento] = useState(false)
-  const [form, setForm] = useState({
-    nombre: '', apellido: '', fecha_nacimiento: '',
-    telefono: '', llamamiento: '', llamamiento_personalizado: '',
-  })
-  const [errores, setErrores] = useState({})
+  const [llamamiento, setLlamamiento] = useState('')
+  const [llamamientoPersonalizado, setLlamamientoPersonalizado] = useState('')
+  const [telefono, setTelefono] = useState('')
+  const [errMsg, setErrMsg] = useState('')
+  const [checking, setChecking] = useState(false)
 
-  function sanitizeAndSet(name, raw) {
-    const soloLetras = raw.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '')
-    setForm(prev => ({ ...prev, [name]: soloLetras }))
-    setErrores(prev => ({ ...prev, [name]: '' }))
+  function handleNombreChange(raw) {
+    const soloValido = raw.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '')
+    setNombreCompleto(soloValido)
+    setErrMsg('')
   }
 
-  function handleChange(e) {
-    const { name, value } = e.target
-    if (name === 'nombre' || name === 'apellido') {
-      sanitizeAndSet(name, value)
-    } else if (name === 'llamamiento_personalizado') {
-      sanitizeAndSet(name, value)
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }))
-      setErrores(prev => ({ ...prev, [name]: '' }))
+  async function handleNombreContinue() {
+    const err = validarNombreCompleto(nombreCompleto)
+    if (err) {
+      setErrMsg(err)
+      return
+    }
+    const partes = sanitizarNombre(nombreCompleto).split(' ')
+    const nombreVal = partes[0]
+    const apellidoVal = partes[1]
+
+    setChecking(true)
+    setErrMsg('')
+    try {
+      const nombreUpper = nombreVal.charAt(0).toUpperCase() + nombreVal.slice(1).toLowerCase()
+      const apellidoUpper = apellidoVal.charAt(0).toUpperCase() + apellidoVal.slice(1).toLowerCase()
+      const { data, error: searchErr } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('nombre', nombreUpper)
+        .eq('apellido', apellidoUpper)
+        .limit(1)
+        .maybeSingle()
+
+      if (searchErr) throw searchErr
+
+      if (data) {
+        onLoginExisting(data)
+        return
+      }
+
+      setNombre(nombreVal)
+      setApellido(apellidoVal)
+      setStep('cumpleanos')
+    } catch (e) {
+      setErrMsg('Error al verificar. Intenta de nuevo.')
+    } finally {
+      setChecking(false)
     }
   }
 
-  function handleBlur(e) {
-    const { name, value } = e.target
-    if (name === 'nombre') {
-      const err = validarNombre(value, 'nombre')
-      setErrores(prev => ({ ...prev, nombre: err }))
+  function handleCumpleanosContinue() {
+    if (!fechaNacimiento) {
+      setErrMsg('La fecha de nacimiento es obligatoria')
+      return
     }
-    if (name === 'apellido') {
-      const err = validarNombre(value, 'apellido')
-      setErrores(prev => ({ ...prev, apellido: err }))
+    const fecha = new Date(fechaNacimiento)
+    const hoy = new Date()
+    if (fecha > hoy) {
+      setErrMsg('La fecha no puede ser futura')
+      return
     }
+    setErrMsg('')
+    setStep('llamamiento')
   }
 
   function handleLlamamientoToggle(e) {
     const checked = e.target.checked
     setTieneLlamamiento(checked)
     if (!checked) {
-      setForm(prev => ({ ...prev, llamamiento: '', telefono: '', llamamiento_personalizado: '' }))
+      setLlamamiento('')
+      setTelefono('')
+      setLlamamientoPersonalizado('')
     }
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleRegistrar() {
     const formData = {
-      ...form,
-      nombre: sanitizarNombre(form.nombre),
-      apellido: sanitizarNombre(form.apellido),
-      llamamiento_personalizado: sanitizarNombre(form.llamamiento_personalizado),
+      nombre: sanitizarNombre(nombre),
+      apellido: sanitizarNombre(apellido),
+      fecha_nacimiento: fechaNacimiento,
+      telefono: telefono || null,
+      llamamiento: llamamiento || null,
+      llamamiento_personalizado: llamamientoPersonalizado
+        ? sanitizarNombre(llamamientoPersonalizado)
+        : null,
     }
-    const v = validarFormulario(formData)
-    setErrores(v)
-    if (Object.keys(v).length > 0) return
+
+    if (llamamiento && esLlamamientoPredefinido(llamamiento)) {
+      const errTel = validarTelefono(telefono)
+      if (errTel) {
+        setErrMsg(errTel)
+        return
+      }
+    }
+    if (llamamiento === 'Otro') {
+      const errLlam = validarLlamamientoPersonalizado(llamamientoPersonalizado)
+      if (errLlam) {
+        setErrMsg(errLlam)
+        return
+      }
+    }
+
+    setErrMsg('')
     await onRegister(formData)
   }
 
+  const bgLogos = [
+    '-top-20 -right-20 w-72 h-72 -rotate-12',
+    '-bottom-32 -left-20 w-96 h-96 rotate-45',
+    'top-1/2 -right-16 w-48 h-48 rotate-[30deg]',
+    'top-1/3 -left-16 w-40 h-40 -rotate-[60deg]',
+    'bottom-1/4 right-1/4 w-32 h-32 rotate-[15deg]',
+  ]
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-warm-50 dark:bg-slate-950">
-      <div className="flex-1 flex flex-col justify-center px-6 max-w-sm mx-auto w-full">
+    <div className="fixed inset-0 z-50 flex flex-col bg-warm-50 dark:bg-slate-950 overflow-y-auto">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {bgLogos.map((pos, i) => (
+          <img
+            key={i}
+            src="/icono-barrio-sin fondo.svg"
+            alt=""
+            className={`absolute ${pos} opacity-[0.08] dark:opacity-[0.06]`}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+
+      <div className="flex-1 flex flex-col justify-center px-6 max-w-sm mx-auto w-full relative">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-church-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-church-600/20 dark:shadow-church-600/40 overflow-hidden">
-            <img src="/icono-barrio-sin fondo.svg" alt="Barrio Buenaventura" className="w-full h-full object-cover" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Barrio Buenaventura</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Comunidad y fe en unidad</p>
+          <h1 className={`font-bold text-gray-900 dark:text-white transition-all duration-500 ${step === 'nombre' ? 'text-2xl' : 'text-lg'}`}>
+            Barrio Buenaventura
+          </h1>
+
         </div>
 
-        {error && (
+        {(error || errMsg) && (
           <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3 mb-4">
-            {error}
+            {error || errMsg}
           </div>
         )}
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm dark:shadow-slate-900/50 p-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Regístrate para ser parte de la comunidad</p>
-
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <Input
-              label="Nombre"
-              name="nombre"
-              placeholder="Tu nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errores.nombre}
-              autoComplete="given-name"
-            />
-            <Input
-              label="Apellido"
-              name="apellido"
-              placeholder="Tu apellido"
-              value={form.apellido}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errores.apellido}
-              autoComplete="family-name"
-            />
-            <Input
-              label="Fecha de Nacimiento"
-              name="fecha_nacimiento"
-              type="date"
-              value={form.fecha_nacimiento}
-              onChange={handleChange}
-              error={errores.fecha_nacimiento}
-            />
-
-            <div className="flex items-center gap-3 pt-1">
-              <input
-                type="checkbox"
-                id="tieneLlamamiento"
-                checked={tieneLlamamiento}
-                onChange={handleLlamamientoToggle}
-                className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-church-600 focus:ring-church-500 dark:bg-slate-700"
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm dark:shadow-slate-900/50 p-6 transition-all duration-300">
+          {step === 'nombre' && (
+            <div className="animate-fade-up">
+              <Input
+                label="¿Cuál es tu nombre?"
+                name="nombreCompleto"
+                placeholder="Ej: Juan Pérez"
+                value={nombreCompleto}
+                onChange={(e) => handleNombreChange(e.target.value)}
+                autoComplete="name"
+                autoFocus
               />
-              <label htmlFor="tieneLlamamiento" className="text-sm text-gray-700 dark:text-slate-300 font-medium">
-                ¿Tienes un llamamiento?
-              </label>
+              <div className="mt-4">
+                <Button fullWidth onClick={handleNombreContinue} disabled={checking}>
+                  {checking ? 'Verificando...' : 'Continuar'}
+                </Button>
+              </div>
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-slate-600" /></div>
+                <div className="relative flex justify-center"><span className="bg-white dark:bg-slate-800 px-3 text-xs text-gray-400 dark:text-slate-500">o</span></div>
+              </div>
+              <Button variant="ghost" fullWidth onClick={onGuest}>
+                Entrar como invitado
+              </Button>
             </div>
+          )}
 
-            {tieneLlamamiento && (
-              <>
-                <Select
-                  label="Llamamiento"
-                  name="llamamiento"
-                  placeholder="Selecciona tu llamamiento"
-                  options={LLAMAMIENTOS}
-                  value={form.llamamiento}
-                  onChange={handleChange}
+          {step === 'cumpleanos' && (
+            <div className="animate-fade-up">
+              <Input
+                label="¿Cuál es tu fecha de nacimiento?"
+                name="fecha_nacimiento"
+                type="date"
+                value={fechaNacimiento}
+                onChange={(e) => { setFechaNacimiento(e.target.value); setErrMsg('') }}
+                autoFocus
+              />
+              <div className="flex gap-2 mt-4">
+                <Button variant="ghost" onClick={() => setStep('nombre')}>Atrás</Button>
+                <div className="flex-1"><Button fullWidth onClick={handleCumpleanosContinue}>Continuar</Button></div>
+              </div>
+            </div>
+          )}
+
+          {step === 'llamamiento' && (
+            <div className="animate-fade-up">
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Casi listo. Cuéntanos un poco más:</p>
+
+              <div className="flex items-center gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  id="tieneLlamamiento"
+                  checked={tieneLlamamiento}
+                  onChange={handleLlamamientoToggle}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-church-600 focus:ring-church-500 dark:bg-slate-700"
                 />
-                {form.llamamiento === 'Otro' && (
-                  <Input
-                    label="Especifica tu llamamiento"
-                    name="llamamiento_personalizado"
-                    placeholder="Ej: Director de música"
-                    value={form.llamamiento_personalizado}
-                    onChange={handleChange}
-                    error={errores.llamamiento_personalizado}
+                <label htmlFor="tieneLlamamiento" className="text-sm text-gray-700 dark:text-slate-300 font-medium">
+                  ¿Tienes un llamamiento?
+                </label>
+              </div>
+
+              {tieneLlamamiento && (
+                <div className="space-y-3.5">
+                  <Select
+                    label="Llamamiento"
+                    name="llamamiento"
+                    placeholder="Selecciona tu llamamiento"
+                    options={LLAMAMIENTOS}
+                    value={llamamiento}
+                    onChange={(e) => { setLlamamiento(e.target.value); setErrMsg('') }}
                   />
-                )}
-                {esLlamamientoPredefinido(form.llamamiento) && (
-                  <>
+                  {llamamiento === 'Otro' && (
                     <Input
-                      label="Teléfono"
-                      name="telefono"
-                      type="tel"
-                      placeholder="+593 99 999 9999"
-                      value={form.telefono}
-                      onChange={handleChange}
-                      error={errores.telefono}
+                      label="Especifica tu llamamiento"
+                      name="llamamiento_personalizado"
+                      placeholder="Ej: Director de música"
+                      value={llamamientoPersonalizado}
+                      onChange={(e) => setLlamamientoPersonalizado(e.target.value)}
                     />
-                    <p className="text-xs text-church-600 dark:text-church-400 bg-church-50 dark:bg-church-950 rounded-lg px-3 py-2">
-                      El teléfono es importante para que la presidencia pueda contactarte rápidamente.
-                    </p>
-                  </>
-                )}
-              </>
-            )}
+                  )}
+                  {esLlamamientoPredefinido(llamamiento) && (
+                    <>
+                      <Input
+                        label="Teléfono"
+                        name="telefono"
+                        type="tel"
+                        placeholder="+593 99 999 9999"
+                        value={telefono}
+                        onChange={(e) => { setTelefono(e.target.value); setErrMsg('') }}
+                      />
+                      <p className="text-xs text-church-600 dark:text-church-400 bg-church-50 dark:bg-church-950 rounded-lg px-3 py-2">
+                        El teléfono es importante para que los miembros puedan ponerse en contacto con el líder que corresponda.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
 
-            <Button type="submit" fullWidth disabled={loading}>
-              {loading ? 'Registrando...' : 'Registrarme'}
-            </Button>
-          </form>
-
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-slate-600" /></div>
-            <div className="relative flex justify-center"><span className="bg-white dark:bg-slate-800 px-3 text-xs text-gray-400 dark:text-slate-500">o</span></div>
-          </div>
-
-          <Button variant="ghost" fullWidth onClick={onGuest}>
-            Entrar como invitado
-          </Button>
+              <div className="flex gap-2 mt-4">
+                <Button variant="ghost" onClick={() => setStep('cumpleanos')}>Atrás</Button>
+                <div className="flex-1"><Button fullWidth onClick={handleRegistrar} disabled={loading}>
+                  {loading ? 'Registrando...' : 'Registrarme'}
+                </Button></div>
+              </div>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-6">

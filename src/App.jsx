@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useCumpleanos } from './hooks/useCumpleanos'
 import { useAcontecimientos } from './hooks/useAcontecimientos'
@@ -23,11 +23,14 @@ function saludo() {
 }
 
 export default function App() {
-  const { user, guest, loading: authLoading, error, isPredefinido, register, loginAsGuest } = useAuth()
+  const { user, guest, loading: authLoading, error, isPredefinido, register, loginWithUserData, loginAsGuest } = useAuth()
   const cumpleanos = useCumpleanos()
+  const cumpleanosRef = useRef(cumpleanos)
+  cumpleanosRef.current = cumpleanos
   const acontecimientos = useAcontecimientos(user?.id)
   const [showTop, setShowTop] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem('iglesia_bv_dark') === 'true')
+  const [freshRegister, setFreshRegister] = useState(false)
   const splashDone = useRef(false)
 
   useEffect(() => {
@@ -41,19 +44,37 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const handleRegister = useCallback(async (formData) => {
+    setFreshRegister(true)
+    await register(formData)
+    cumpleanosRef.current?.recargar()
+  }, [register])
+
+  const handleLoginExisting = useCallback((userData) => {
+    loginWithUserData(userData)
+  }, [loginWithUserData])
+
   const autenticado = !!user || guest
   const datosListos = !cumpleanos.loading && !acontecimientos.loading
 
   useEffect(() => {
     if (splashDone.current) return
-    if (!datosListos) return
-    splashDone.current = true
     const splash = document.getElementById('splash')
     if (!splash) return
+
+    const splashText = splash.querySelector('.splash-text')
+    if (splashText) {
+      splashText.textContent = freshRegister
+        ? 'Bienvenido al portal digital del Barrio Buenaventura'
+        : 'Cargando...'
+    }
+
+    if (!datosListos) return
+    splashDone.current = true
     splash.style.transition = 'opacity 0.5s ease-out'
     splash.style.opacity = '0'
     setTimeout(() => splash.remove(), 550)
-  }, [datosListos])
+  }, [datosListos, freshRegister])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,15 +91,22 @@ export default function App() {
 
   if (authLoading && !autenticado) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-warm-50 dark:bg-slate-950">
-        <div className="relative flex items-center justify-center w-20 h-20">
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none">
-            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-church-200 dark:text-slate-700" strokeDasharray="264" />
-            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-church-600 dark:text-church-400 animate-ring" strokeDasharray="264" strokeDashoffset="66" />
-          </svg>
-          <img src="/icono-barrio-sin fondo.svg" alt="Cargando" className="w-9 h-9 animate-spin-logo" />
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-warm-50 dark:bg-slate-950 px-6">
+        <div className="relative w-24 h-24 mx-auto mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-church-500 to-church-700 rounded-3xl shadow-xl shadow-church-600/25 dark:shadow-church-900/40 overflow-hidden">
+            <img src="/icono-barrio-sin fondo.svg" alt="" className="w-full h-full object-cover p-3" />
+          </div>
         </div>
-        <p className="text-sm text-gray-400 dark:text-slate-500 mt-5">Cargando...</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white text-center">
+          Bienvenido al portal digital del Barrio Buenaventura
+        </h1>
+        <div className="mt-6 flex items-center gap-2 text-sm text-gray-400 dark:text-slate-500">
+          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span>Preparando todo para ti...</span>
+        </div>
       </div>
     )
   }
@@ -86,7 +114,8 @@ export default function App() {
   if (!autenticado) {
     return (
       <AuthModal
-        onRegister={register}
+        onRegister={handleRegister}
+        onLoginExisting={handleLoginExisting}
         onGuest={loginAsGuest}
         loading={authLoading}
         error={error}

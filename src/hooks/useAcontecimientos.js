@@ -29,22 +29,24 @@ export function useAcontecimientos(userId) {
 
   const crear = useCallback(async (nombre, fechaHora) => {
     try {
+      const isoFecha = new Date(fechaHora).toISOString()
       const { data, error: err } = await supabase
         .from('acontecimientos')
         .insert({
           nombre: nombre.trim(),
-          fecha_hora: fechaHora,
+          fecha_hora: isoFecha,
           creado_por: userId,
         })
         .select()
         .single()
 
-      if (err) throw err
+      if (err) { console.error('[crear] supabase error:', err); throw err }
       setEventos(prev => [...prev, data].sort((a, b) =>
         new Date(a.fecha_hora) - new Date(b.fecha_hora)
       ))
       return data
     } catch (err) {
+      console.error('[crear] catch:', err)
       setError(err.message)
       return null
     }

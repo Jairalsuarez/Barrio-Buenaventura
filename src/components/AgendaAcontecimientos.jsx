@@ -57,16 +57,18 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
     if (!form.nombre.trim() || !form.fecha_hora) return
     setCreando(true)
     try {
-      await crear(form.nombre, form.fecha_hora)
-      fetch('/api/send-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Nuevo evento',
-          body: form.nombre.trim(),
-          url: '/',
-        }),
-      }).catch(() => {})
+      const ev = await crear(form.nombre, form.fecha_hora)
+      if (ev && !window.location.hostname.includes('localhost')) {
+        fetch('/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Nuevo evento',
+            body: form.nombre.trim(),
+            url: '/',
+          }),
+        }).catch(() => {})
+      }
     } catch {}
     setForm({ nombre: '', fecha_hora: '' })
     setShowForm(false)

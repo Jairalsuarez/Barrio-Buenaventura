@@ -50,6 +50,12 @@ export function useAuth() {
     }
   }, [])
 
+  const loginWithUserData = useCallback((userData) => {
+    setSession(userData)
+    setUser(userData)
+    setGuestState(false)
+  }, [])
+
   const loginAsGuest = useCallback(() => {
     setGuest()
     setGuestState(true)
@@ -71,6 +77,7 @@ export function useAuth() {
     error,
     isPredefinido,
     register,
+    loginWithUserData,
     loginAsGuest,
     logout,
   }

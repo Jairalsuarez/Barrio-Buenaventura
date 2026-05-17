@@ -40,12 +40,11 @@ export const LLAMAMIENTOS = [
   { value: 'Segundo Consejero', label: 'Segundo Consejero' },
   { value: 'Presidente Quorum Elderes', label: 'Presidente del Quórum de Élderes' },
   { value: 'Presidenta Sociedad Socorro', label: 'Presidenta de la Sociedad de Socorro' },
-  { value: 'Presidenta Escuela Dominical', label: 'Presidenta de la Escuela Dominical' },
-  { value: 'Secretario de Barrio', label: 'Secretario(a) de Barrio' },
+  { value: 'Presidente Escuela Dominical', label: 'Presidente(a) de la Escuela Dominical' },
+  { value: 'Secretario de Barrio', label: 'Secretario de Barrio' },
   { value: 'Presidenta Primaria', label: 'Presidenta de la Primaria' },
   { value: 'Presidenta Mujeres Jovenes', label: 'Presidenta de las Mujeres Jóvenes' },
   { value: 'Otro', label: 'Otro' },
-  { value: 'Ninguno', label: 'Ninguno' },
 ]
 
 export function esLlamamientoPredefinido(llamamiento) {

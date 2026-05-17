@@ -1,4 +1,5 @@
 import webpush from 'web-push'
+import { createClient } from '@supabase/supabase-js'
 
 webpush.setVapidDetails(
   'mailto:admin@barriobv.com',
@@ -21,7 +22,6 @@ export default async function handler(req, res) {
   try {
     const { title, body, url } = req.body || {}
 
-    const { createClient } = await import('@supabase/supabase-js')
     const supabase = createClient(
       process.env.VITE_SUPABASE_URL,
       process.env.VITE_SUPABASE_ANON_KEY
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
           },
           JSON.stringify({ title, body, url })
         ).catch(() => {
-          if (sub.endpoint) {
+          if (sub.id) {
             supabase.from('push_subscriptions').delete().eq('id', sub.id)
           }
         })
