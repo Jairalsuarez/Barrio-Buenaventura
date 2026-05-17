@@ -90,12 +90,9 @@ export default function App() {
     if (autenticado) return
     const splash = document.getElementById('splash')
     if (!splash) return
-    const timer = setTimeout(() => {
-      splash.style.transition = 'opacity 0.3s ease-out'
-      splash.style.opacity = '0'
-      setTimeout(() => { splash.remove(); splashDone.current = true }, 350)
-    }, 300)
-    return () => clearTimeout(timer)
+    splash.style.transition = 'opacity 0.3s ease-out'
+    splash.style.opacity = '0'
+    setTimeout(() => { if (splash.parentNode) { splash.remove(); splashDone.current = true } }, 350)
   }, [autenticado])
 
   useEffect(() => {
