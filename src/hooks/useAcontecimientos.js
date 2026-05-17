@@ -6,6 +6,7 @@ export function useAcontecimientos(userId) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const mounted = useRef(false)
+  const channelRef = useRef(null)
 
   const cargar = useCallback(async () => {
     const { data, error: err } = await supabase
@@ -27,6 +28,43 @@ export function useAcontecimientos(userId) {
     return () => { mounted.current = false }
   }, [cargar])
 
+  useEffect(() => {
+    const channel = supabase.channel('acontecimientos-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'acontecimientos' },
+        (payload) => {
+          const nuevo = payload.new
+          if (new Date(nuevo.fecha_hora) >= new Date()) {
+            setEventos(prev => {
+              if (prev.some(e => e.id === nuevo.id)) return prev
+              return [...prev, nuevo].sort((a, b) =>
+                new Date(a.fecha_hora) - new Date(b.fecha_hora)
+              )
+            })
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'acontecimientos' },
+        (payload) => {
+          setEventos(prev => prev.filter(e => e.id !== payload.old.id))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'acontecimientos' },
+        (payload) => {
+          setEventos(prev => prev.map(e => e.id === payload.new.id ? payload.new : e))
+        }
+      )
+      .subscribe()
+
+    channelRef.current = channel
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   const crear = useCallback(async (nombre, fechaHora, descripcion) => {
     try {
       const isoFecha = new Date(fechaHora).toISOString()
@@ -42,9 +80,6 @@ export function useAcontecimientos(userId) {
         .single()
 
       if (err) { console.error('[crear] supabase error:', err); throw err }
-      setEventos(prev => [...prev, data].sort((a, b) =>
-        new Date(a.fecha_hora) - new Date(b.fecha_hora)
-      ))
       return data
     } catch (err) {
       console.error('[crear] catch:', err)
@@ -61,7 +96,6 @@ export function useAcontecimientos(userId) {
         .eq('id', id)
 
       if (err) throw err
-      setEventos(prev => prev.filter(e => e.id !== id))
     } catch (err) {
       setError(err.message)
     }
