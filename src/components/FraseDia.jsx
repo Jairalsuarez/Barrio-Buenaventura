@@ -6,7 +6,7 @@ export default function FraseDia() {
 
   return (
     <section className="px-5 py-6 max-w-sm mx-auto">
-      <Card className="!bg-gradient-to-br from-church-900 to-church-950 !border-none text-center relative overflow-hidden">
+      <Card className="!bg-gradient-to-br from-church-900 to-church-950 !border-none text-center relative overflow-hidden animate-fade-scale">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-church-400 rounded-full blur-3xl" />

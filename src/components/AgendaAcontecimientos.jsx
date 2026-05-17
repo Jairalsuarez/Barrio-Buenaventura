@@ -25,8 +25,9 @@ function NotificationPrompt({ onAccept, onDismiss }) {
   )
 }
 
-export default function AgendaAcontecimientos({ userId, isPredefinido }) {
-  const { eventos, loading, error, crear, eliminar } = useAcontecimientos(userId)
+export default function AgendaAcontecimientos({ userId, isPredefinido, data: externData }) {
+  const hookData = useAcontecimientos(userId)
+  const { eventos, loading, error, crear, eliminar } = externData ?? hookData
   const [notifAsked, setNotifAsked] = useState(false)
   const [notifGranted, setNotifGranted] = useState(() => typeof Notification !== 'undefined' && Notification.permission === 'granted')
   const [showForm, setShowForm] = useState(false)
@@ -117,8 +118,8 @@ export default function AgendaAcontecimientos({ userId, isPredefinido }) {
         </div>
       ) : (
         <div className="space-y-2.5">
-          {eventos.map(ev => (
-            <Card key={ev.id} className="!p-4 flex items-start gap-3 relative overflow-hidden">
+          {eventos.map((ev, i) => (
+            <Card key={ev.id} className="!p-4 flex items-start gap-3 relative overflow-hidden animate-fade-up" style={{ animationDelay: `${i * 0.08}s` }}>
               <span className="text-xl flex-shrink-0 mt-0.5">{getEventIcon(ev.nombre)}</span>
               <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm truncate">{ev.nombre}</p>

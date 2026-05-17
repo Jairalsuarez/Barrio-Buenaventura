@@ -44,6 +44,7 @@ export default function EnlacesComunidad() {
     <section className="px-5 py-8 max-w-sm mx-auto">
       <h2 className="text-lg font-bold text-gray-900 mb-4">Contacto</h2>
       <div className="space-y-3">
+        <div className="animate-fade-up" style={{ animationDelay: '0s' }}>
         <Card className="!p-4 flex items-center gap-4 hover:shadow-md dark:hover:shadow-slate-900/50 transition-shadow cursor-pointer" onClick={() => window.open(WHATSAPP_GRUPO, '_blank')}>
           <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
             <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
@@ -58,13 +59,20 @@ export default function EnlacesComunidad() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </Card>
+        </div>
 
+        <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
         <ContactCard nombre="Presidente del Quórum de Élderes" descripcion="Presidente del Quórum de Élderes" telefono={PRESIDENTE_ELDERES} color="elderes" />
+        </div>
+        <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
         <ContactCard nombre="Presidenta de la Sociedad de Socorro" descripcion="Presidenta de la Sociedad de Socorro" telefono={PRESIDENTA_SOCORRO} color="socorro" />
+        </div>
+        <div className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
         <ContactCard nombre="Misioneros" descripcion="Contacta a los misioneros" telefono={MISIONEROS_NUMERO} color="mision" />
+        </div>
 
         {!respondio && (
-          <Card className="!bg-gradient-to-br from-church-50 to-church-100 dark:!from-slate-800 dark:!to-slate-700 !border-church-200 dark:!border-slate-600 !p-5 text-center">
+          <Card className="!bg-gradient-to-br from-church-50 to-church-100 dark:!from-slate-800 dark:!to-slate-700 !border-church-200 dark:!border-slate-600 !p-5 text-center animate-fade-scale">
             <span className="text-3xl block mb-3">🙋</span>
             <h3 className="font-bold text-church-900 dark:text-white text-base">¿Eres nuevo o estás regresando a la capilla?</h3>
             <p className="text-sm text-church-700 dark:text-slate-300 mt-1 mb-4">

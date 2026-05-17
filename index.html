@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/src/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icono-barrio-sin fondo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0d426f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -11,14 +11,47 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>Barrio Buenaventura</title>
+    <style>
+      .splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fef8ee; transition: opacity 0.3s; }
+      @media (prefers-color-scheme: dark) { .splash { background: #020617; } .splash-text { color: #64748b; } }
+      .splash-ring { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+      .splash-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .splash-ring circle.track { fill: none; stroke: #e0eefe; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 264; }
+      .splash-ring circle.dash { fill: none; stroke: #0075c9; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 264; stroke-dashoffset: 66; animation: ring-dash 1.8s ease-in-out infinite; transform-origin: center; }
+      .splash-logo { width: 36px; height: 36px; animation: spin-logo 2s ease-in-out infinite; }
+      .splash-text { margin-top: 20px; font-size: 14px; color: #94a3b8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      @keyframes ring-dash { 0% { stroke-dashoffset: 264; } 50% { stroke-dashoffset: 66; transform: rotate(135deg); } 100% { stroke-dashoffset: 264; transform: rotate(450deg); } }
+      @keyframes spin-logo { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div class="splash" id="splash">
+      <div class="splash-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="track" cx="50" cy="50" r="42" />
+          <circle class="dash" cx="50" cy="50" r="42" />
+        </svg>
+        <img class="splash-logo" src="/icono-barrio-sin fondo.svg" alt="" />
+      </div>
+      <p class="splash-text">Cargando...</p>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  if (confirm('Nueva versión disponible. ¿Actualizar?')) {
+                    window.location.reload()
+                  }
+                }
+              })
+            })
+          })
         })
       }
     </script>

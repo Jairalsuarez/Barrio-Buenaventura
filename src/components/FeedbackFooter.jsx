@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Card from './ui/Card'
 import Button from './ui/Button'
+import { supabase } from '../lib/supabase'
+import { validarFeedback } from '../lib/validacion'
 
 const FEEDBACK_KEY = 'iglesia_bv_feedback'
 
@@ -10,18 +12,31 @@ function yaEnvioHoy() {
   return guardado === new Date().toDateString()
 }
 
-function marcarEnviado() {
+function marcarEnviadoLocal() {
   localStorage.setItem(FEEDBACK_KEY, new Date().toDateString())
 }
 
-export default function FeedbackFooter() {
+export default function FeedbackFooter({ usuarioId }) {
   const [texto, setTexto] = useState('')
   const [enviado, setEnviado] = useState(() => yaEnvioHoy())
+  const [enviando, setEnviando] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!texto.trim()) return
-    marcarEnviado()
+    const err = validarFeedback(texto)
+    if (err) return
+    if (enviando) return
+    setEnviando(true)
+    const { error } = await supabase.from('feedback').insert({
+      mensaje: texto.trim(),
+      usuario_id: usuarioId || null,
+    })
+    setEnviando(false)
+    if (error) {
+      console.error('Error al enviar feedback:', error)
+      return
+    }
+    marcarEnviadoLocal()
     setEnviado(true)
   }
 
@@ -41,14 +56,15 @@ export default function FeedbackFooter() {
               onChange={e => setTexto(e.target.value)}
               placeholder="Escribe tu comentario, sugerencia o reporte aquí..."
               rows={3}
+              maxLength={2000}
               className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm outline-none transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-church-400 focus:ring-2 focus:ring-church-400/20 resize-none dark:text-white"
             />
-            <Button type="submit" fullWidth disabled={!texto.trim()}>
-              Enviar comentario
+            <Button type="submit" fullWidth disabled={!texto.trim() || enviando}>
+              {enviando ? 'Enviando...' : 'Enviar comentario'}
             </Button>
           </form>
         ) : (
-          <div className="text-center py-4">
+          <div className="text-center py-4 animate-fade-scale">
             <span className="text-3xl block mb-3">🙏</span>
             <p className="font-semibold text-gray-900 dark:text-white">Gracias por tu feedback</p>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Sirve de mucho para seguir mejorando.</p>

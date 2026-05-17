@@ -17,8 +17,9 @@ function getMensajePara(nombre) {
   return MENSAJES_INSPIRADORES[indice]
 }
 
-export default function SeccionCumpleanos({ currentUser }) {
-  const { cumpleaneros, hoy, proximos, loading } = useCumpleanos()
+export default function SeccionCumpleanos({ currentUser, data: externData }) {
+  const hookData = useCumpleanos()
+  const { cumpleaneros, hoy, proximos, loading } = externData ?? hookData
   const confettiFired = useRef(false)
 
   const soyYoHoy = currentUser && hoy.some(c => c.id === currentUser.id)
@@ -80,8 +81,8 @@ export default function SeccionCumpleanos({ currentUser }) {
 
       {proximos.length > 0 ? (
         <div className="space-y-2">
-          {proximos.slice(0, 5).map(c => (
-            <Card key={c.id} className="!p-3 flex items-center gap-3">
+          {proximos.slice(0, 5).map((c, i) => (
+            <Card key={c.id} className="!p-3 flex items-center gap-3 animate-slide-right" style={{ animationDelay: `${i * 0.08}s` }}>
               <div className="w-9 h-9 rounded-full bg-warm-100 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-warm-700 dark:text-warm-300 flex-shrink-0">
                 {c.dias_restantes}
               </div>

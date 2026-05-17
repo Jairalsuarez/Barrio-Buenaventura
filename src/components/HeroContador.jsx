@@ -113,7 +113,7 @@ export default function HeroContador() {
                 { val: minutos, label: 'Min' },
                 { val: segundos, label: 'Seg' },
               ].map(item => (
-                <div key={item.label} className="text-center">
+                <div key={item.label} className="text-center animate-count-pop" style={{ animationDelay: `${['Días', 'Horas', 'Min', 'Seg'].indexOf(item.label) * 0.1}s` }}>
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center border border-white/10">
                     <span className="text-2xl sm:text-3xl font-bold tabular-nums">{String(item.val).padStart(2, '0')}</span>
                   </div>

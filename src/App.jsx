@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
+import { useCumpleanos } from './hooks/useCumpleanos'
+import { useAcontecimientos } from './hooks/useAcontecimientos'
 import AuthModal from './components/AuthModal'
 import HeroContador from './components/HeroContador'
 import FraseDia from './components/FraseDia'
@@ -21,9 +23,12 @@ function saludo() {
 }
 
 export default function App() {
-  const { user, guest, loading, error, isPredefinido, register, loginAsGuest } = useAuth()
+  const { user, guest, loading: authLoading, error, isPredefinido, register, loginAsGuest } = useAuth()
+  const cumpleanos = useCumpleanos()
+  const acontecimientos = useAcontecimientos(user?.id)
   const [showTop, setShowTop] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem('iglesia_bv_dark') === 'true')
+  const splashDone = useRef(false)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -37,13 +42,39 @@ export default function App() {
   }, [])
 
   const autenticado = !!user || guest
+  const datosListos = autenticado && !cumpleanos.loading && !acontecimientos.loading
+
+  useEffect(() => {
+    if (splashDone.current || !datosListos) return
+    splashDone.current = true
+    const splash = document.getElementById('splash')
+    if (!splash) return
+    splash.style.transition = 'opacity 0.5s ease-out'
+    splash.style.opacity = '0'
+    setTimeout(() => splash.remove(), 550)
+  }, [datosListos])
+
+  if (authLoading && !autenticado) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-warm-50 dark:bg-slate-950">
+        <div className="relative flex items-center justify-center w-20 h-20">
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-church-200 dark:text-slate-700" strokeDasharray="264" />
+            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-church-600 dark:text-church-400 animate-ring" strokeDasharray="264" strokeDashoffset="66" />
+          </svg>
+          <img src="/icono-barrio-sin fondo.svg" alt="Cargando" className="w-9 h-9 animate-spin-logo" />
+        </div>
+        <p className="text-sm text-gray-400 dark:text-slate-500 mt-5">Cargando...</p>
+      </div>
+    )
+  }
 
   if (!autenticado) {
     return (
       <AuthModal
         onRegister={register}
         onGuest={loginAsGuest}
-        loading={loading}
+        loading={authLoading}
         error={error}
       />
     )
@@ -54,12 +85,10 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center justify-between px-5 h-14 max-w-sm mx-auto">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-church-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-              </svg>
+            <div className="w-7 h-7 rounded-lg overflow-hidden">
+              <img src="/icono-barrio-sin fondo.svg" alt="Barrio Buenaventura" className="w-full h-full object-contain" />
             </div>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">Buenaventura</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white">Barrio Buenaventura</span>
           </div>
           <button
             onClick={() => setDark(!dark)}
@@ -89,10 +118,10 @@ export default function App() {
         </div>
         <div id="section-inicio"><HeroContador /></div>
         <FraseDia />
-        <div id="section-cumpleanos"><SeccionCumpleanos currentUser={user} /></div>
-        <div id="section-eventos"><AgendaAcontecimientos userId={user?.id} isPredefinido={isPredefinido} /></div>
+        <div id="section-cumpleanos"><SeccionCumpleanos currentUser={user} data={cumpleanos} /></div>
+        <div id="section-eventos"><AgendaAcontecimientos userId={user?.id} isPredefinido={isPredefinido} data={acontecimientos} /></div>
         <div id="section-comunidad"><EnlacesComunidad /></div>
-        <div id="section-feedback"><FeedbackFooter /></div>
+        <div id="section-feedback"><FeedbackFooter usuarioId={user?.id} /></div>
       </main>
 
       {showTop && (
