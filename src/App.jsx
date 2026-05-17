@@ -10,6 +10,15 @@ import AgendaAcontecimientos from './components/AgendaAcontecimientos'
 import EnlacesComunidad from './components/EnlacesComunidad'
 import FeedbackFooter from './components/FeedbackFooter'
 
+const BG_LOGOS = [
+  '-top-20 -right-20 w-72 h-72 -rotate-12',
+  '-bottom-32 -left-20 w-96 h-96 rotate-45',
+  'top-1/3 -right-16 w-48 h-48 rotate-[30deg]',
+  'top-2/3 -left-16 w-40 h-40 -rotate-[60deg]',
+  'bottom-1/4 right-1/4 w-32 h-32 rotate-[15deg]',
+  'top-1/4 left-1/3 w-28 h-28 -rotate-[25deg]',
+]
+
 function scrollTo(id) {
   const el = document.getElementById(id)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -123,8 +132,33 @@ export default function App() {
     )
   }
 
+  useEffect(() => {
+    if (!autenticado || !cumpleanos.hoy.length) return
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    const hoy = new Date().toDateString()
+    if (localStorage.getItem('iglesia_bv_notif_cumple') === hoy) return
+    localStorage.setItem('iglesia_bv_notif_cumple', hoy)
+    const nombres = cumpleanos.hoy.map(c => c.nombre).join(', ')
+    new Notification('🎈 Cumpleaños de hoy', {
+      body: `Hoy celebramos a: ${nombres}`,
+      icon: '/icono-barrio-sin fondo.svg',
+    })
+  }, [autenticado, cumpleanos.hoy])
+
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 relative">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {BG_LOGOS.map((pos, i) => (
+          <img
+            key={i}
+            src="/icono-barrio-sin fondo.svg"
+            alt=""
+            className={`absolute ${pos} opacity-[0.05] dark:opacity-[0.04]`}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+      <div className="relative z-10">
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center justify-between px-5 h-14 max-w-sm mx-auto">
           <div className="flex items-center gap-2">
@@ -201,6 +235,7 @@ export default function App() {
           </button>
         </div>
       </nav>
+      </div>
     </div>
   )
 }

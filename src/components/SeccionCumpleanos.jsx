@@ -94,7 +94,7 @@ export default function SeccionCumpleanos({ currentUser, data: externData }) {
             </Card>
           ))}
         </div>
-      ) : (
+      ) : hoy.length === 0 && (
         <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">No hay cumpleaños próximos. Estate pendiente de la página.</p>
       )}
     </section>

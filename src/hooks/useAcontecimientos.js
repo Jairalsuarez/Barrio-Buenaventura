@@ -27,7 +27,7 @@ export function useAcontecimientos(userId) {
     return () => { mounted.current = false }
   }, [cargar])
 
-  const crear = useCallback(async (nombre, fechaHora) => {
+  const crear = useCallback(async (nombre, fechaHora, descripcion) => {
     try {
       const isoFecha = new Date(fechaHora).toISOString()
       const { data, error: err } = await supabase
@@ -35,6 +35,7 @@ export function useAcontecimientos(userId) {
         .insert({
           nombre: nombre.trim(),
           fecha_hora: isoFecha,
+          descripcion: descripcion?.trim() || null,
           creado_por: userId,
         })
         .select()
