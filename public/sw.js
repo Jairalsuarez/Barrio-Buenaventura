@@ -1,4 +1,4 @@
-const CACHE = 'iglesia-bv-v3'
+const CACHE = 'iglesia-bv-v4'
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -65,4 +65,29 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   )
+})
+
+const reminderTimers = {}
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SCHEDULE_REMINDER') {
+    const { id, nombre, fecha_hora, ahora } = event.data
+    const eventTime = new Date(fecha_hora).getTime()
+    const reminderTime = eventTime - 5 * 60 * 1000
+    const delay = reminderTime - (ahora || Date.now())
+    if (delay > 0 && delay < 7 * 24 * 60 * 60 * 1000) {
+      if (reminderTimers[id]) clearTimeout(reminderTimers[id])
+      reminderTimers[id] = setTimeout(() => {
+        self.registration.showNotification('Recordatorio', {
+          body: `"${nombre}" comienza en 5 minutos`,
+          icon: '/icono-barrio-sin fondo.svg',
+          badge: '/icon-192.png',
+          data: { url: '/' },
+          vibrate: [100, 50, 100],
+          tag: 'reminder-' + id,
+        })
+        delete reminderTimers[id]
+      }, delay)
+    }
+  }
 })

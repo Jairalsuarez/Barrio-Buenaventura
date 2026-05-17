@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Card from './ui/Card'
 import Badge from './ui/Badge'
+import Icon from './ui/Icon'
 import { useCumpleanos } from '../hooks/useCumpleanos'
 
 const MENSAJES_INSPIRADORES = [
@@ -49,7 +50,7 @@ export default function SeccionCumpleanos({ currentUser, data: externData }) {
   return (
     <section className="px-5 py-6 max-w-sm mx-auto">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-lg">🎂</span>
+        <Icon size={24}>cake</Icon>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">Cumpleaños</h2>
         <Badge variant="warm" className="text-xs">{cumpleaneros.length}</Badge>
       </div>
@@ -58,7 +59,7 @@ export default function SeccionCumpleanos({ currentUser, data: externData }) {
         <Card className="!bg-gradient-to-br from-gold-500 via-gold-400 to-warm-400 !border-none text-white text-center mb-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.2)_0%,_transparent_70%)]" />
           <div className="relative z-10">
-            <span className="text-4xl block mb-2">🎉</span>
+            <Icon size={36} className="block mb-2 mx-auto">celebration</Icon>
             <p className="text-xl font-bold">¡Feliz cumpleaños, {currentUser?.nombre}!</p>
             <p className="text-sm mt-1 opacity-90">Que el Señor te bendiga en este día especial.</p>
           </div>
@@ -67,8 +68,8 @@ export default function SeccionCumpleanos({ currentUser, data: externData }) {
 
       {hoy.length > 0 && !soyYoHoy && (
         <Card className="!border-warm-200 dark:!border-warm-800 !bg-warm-50 dark:!bg-slate-800 mb-4">
-          <p className="font-semibold text-warm-800 dark:text-warm-300 text-sm">
-            🎈 Hoy es el cumpleaños de
+          <p className="font-semibold text-warm-800 dark:text-warm-300 text-sm flex items-center gap-1">
+            <Icon size={16}>balloon</Icon> Hoy es el cumpleaños de
           </p>
           <p className="text-warm-900 dark:text-warm-200 font-bold text-base mt-1">
             {hoy.map(c => `${c.nombre} ${c.apellido}`).join(', ')}

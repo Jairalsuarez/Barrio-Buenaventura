@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Card from './ui/Card'
 import Button from './ui/Button'
+import Icon from './ui/Icon'
 
 const MISIONEROS_NUMERO = '+593987321144'
 const WHATSAPP_GRUPO = 'https://chat.whatsapp.com/ERfiLLO223kDKtOGQf3ZpD'
@@ -113,10 +114,10 @@ export default function EnlacesComunidad() {
 
         {!respondio && (
           <Card className="!bg-gradient-to-br from-church-50 to-church-100 dark:!from-slate-800 dark:!to-slate-700 !border-church-200 dark:!border-slate-600 !p-5 text-center animate-fade-scale">
-            <span className="text-3xl block mb-3">🙋</span>
+            <Icon size={36} className="block mb-3 mx-auto">person_raised_hand</Icon>
             <h3 className="font-bold text-church-900 dark:text-white text-base">¿Eres nuevo o estás regresando a la capilla?</h3>
             <p className="text-sm text-church-700 dark:text-slate-300 mt-1 mb-4">
-              Nos encantaría conocerte y acompañarte en este camino de fe.
+              Hola, somos los misioneros del Barrio y nos encantaría conocerte.
             </p>
             <div className="flex gap-2 justify-center">
               <Button variant="primary" onClick={() => { setInteresMisional(true); setRespondio(true) }}>
@@ -132,7 +133,7 @@ export default function EnlacesComunidad() {
         {interesMisional && (
           <Card className="!bg-gradient-to-br from-church-50 to-church-100 dark:!from-slate-800 dark:!to-slate-700 !border-church-200 dark:!border-slate-600 !p-5">
             <div className="text-center mb-4">
-              <span className="text-3xl block mb-2">🤍</span>
+              <Icon size={36} className="block mb-2 mx-auto" fill>favorite</Icon>
               <h3 className="font-bold text-church-900 dark:text-white">Qué alegría tenerte aquí</h3>
               <p className="text-sm text-church-700 dark:text-slate-300 mt-1">
                 Tu deseo de conocer o regresar al evangelio es una inspiración.

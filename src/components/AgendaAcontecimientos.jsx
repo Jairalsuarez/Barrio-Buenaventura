@@ -6,23 +6,43 @@ import Button from './ui/Button'
 import Input from './ui/Input'
 import Spinner from './ui/Spinner'
 import Modal from './ui/Modal'
+import Icon from './ui/Icon'
 import { useAcontecimientos } from '../hooks/useAcontecimientos'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 import { useAsistencia } from '../hooks/useAsistencia'
+import { supabase } from '../lib/supabase'
 
-function DetalleEventoModal({ evento, userId, onClose }) {
+function DetalleEventoModal({ evento, userId, isPredefinido, onClose }) {
   const { asistira, cargar, responder, loading: rsvpLoading } = useAsistencia(evento?.id, userId)
+  const [asistentes, setAsistentes] = useState([])
+  const [cargandoAsistentes, setCargandoAsistentes] = useState(false)
 
   useEffect(() => { if (evento) cargar() }, [evento, cargar])
 
+  useEffect(() => {
+    if (!evento || !isPredefinido) return
+    setCargandoAsistentes(true)
+    supabase
+      .from('asistencia')
+      .select('usuario_id, asistira, usuarios!inner (nombre, apellido)')
+      .eq('acontecimiento_id', evento.id)
+      .then(({ data }) => {
+        if (data) setAsistentes(data)
+        setCargandoAsistentes(false)
+      })
+  }, [evento, isPredefinido])
+
   if (!evento) return null
+
+  const queAsisten = asistentes.filter(a => a.asistira === true)
+  const queNoAsisten = asistentes.filter(a => a.asistira === false)
 
   return (
     <Modal open={!!evento} onClose={onClose} title="Detalles del evento">
       <div className="space-y-4">
         <div>
-          <p className="text-2xl mb-1">{getEventIcon(evento.nombre)}</p>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{evento.nombre}</h3>
+          <Icon size={28}>{getEventIconName(evento.nombre)}</Icon>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-1">{evento.nombre}</h3>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             {format(new Date(evento.fecha_hora), "d 'de' MMMM '·' HH:mm", { locale: es })}
           </p>
@@ -57,21 +77,61 @@ function DetalleEventoModal({ evento, userId, onClose }) {
             </button>
           </div>
         </div>
+        {isPredefinido && (
+          <div className="border-t border-gray-100 dark:border-slate-700 pt-4">
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+              <Icon size={16} className="mr-1">group</Icon>
+              Personas que respondieron
+            </p>
+            {cargandoAsistentes ? (
+              <div className="flex justify-center py-3"><Spinner /></div>
+            ) : asistentes.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-slate-500">Nadie ha respondido aún</p>
+            ) : (
+              <div className="space-y-2">
+                {queAsisten.length > 0 && (
+                  <div>
+                    <p className="text-xs text-church-600 dark:text-church-400 font-medium mb-1">Asistirán ({queAsisten.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {queAsisten.map(a => (
+                        <span key={a.usuario_id} className="text-xs bg-church-50 dark:bg-church-950 text-church-700 dark:text-church-300 rounded-full px-2.5 py-1">
+                          {a.usuarios.nombre} {a.usuarios.apellido}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {queNoAsisten.length > 0 && (
+                  <div>
+                    <p className="text-xs text-red-500 dark:text-red-400 font-medium mb-1">No asistirán ({queNoAsisten.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {queNoAsisten.map(a => (
+                        <span key={a.usuario_id} className="text-xs bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300 rounded-full px-2.5 py-1">
+                          {a.usuarios.nombre} {a.usuarios.apellido}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   )
 }
 
-function getEventIcon(nombre) {
+function getEventIconName(nombre) {
   const n = nombre.toLowerCase()
-  if (n.includes('sacramental') || n.includes('reunión')) return '🙏'
-  if (n.includes('bautismo') || n.includes('bautizo')) return '💧'
-  if (n.includes('actividad') || n.includes('fiesta')) return '🎉'
-  if (n.includes('conferencia')) return '📖'
-  if (n.includes('templo')) return '🏛️'
-  if (n.includes('ensenanza') || n.includes('clase') || n.includes('escuela')) return '📚'
-  if (n.includes('ayuno') || n.includes('testimonio')) return '🤍'
-  return '📌'
+  if (n.includes('sacramental') || n.includes('reunión')) return 'prayer'
+  if (n.includes('bautismo') || n.includes('bautizo')) return 'water_drop'
+  if (n.includes('actividad') || n.includes('fiesta')) return 'celebration'
+  if (n.includes('conferencia')) return 'book'
+  if (n.includes('templo')) return 'account_balance'
+  if (n.includes('ensenanza') || n.includes('clase') || n.includes('escuela')) return 'school'
+  if (n.includes('ayuno') || n.includes('testimonio')) return 'favorite'
+  return 'event'
 }
 
 export default function AgendaAcontecimientos({ userId, isPredefinido, data: externData }) {
@@ -92,6 +152,40 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
       })
     }
   }, [subscribe])
+
+  const remindersRef = useRef([])
+
+  useEffect(() => {
+    remindersRef.current.forEach(t => clearTimeout(t))
+    const timers = []
+    const now = Date.now()
+    const keyBase = 'iglesia_bv_reminder_'
+    eventos.forEach(ev => {
+      const eventTime = new Date(ev.fecha_hora).getTime()
+      const reminderTime = eventTime - 5 * 60 * 1000
+      const delay = reminderTime - now
+      if (delay > 0 && delay < 7 * 24 * 60 * 60 * 1000) {
+        const sentKey = keyBase + ev.id
+        if (localStorage.getItem(sentKey)) return
+        const timer = setTimeout(() => {
+          try { new Notification('Recordatorio', { body: `"${ev.nombre}" comienza en 5 minutos`, icon: '/icono-barrio-sin fondo.svg' }) } catch {}
+          localStorage.setItem(sentKey, '1')
+          if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'SCHEDULE_REMINDER',
+              id: ev.id,
+              nombre: ev.nombre,
+              fecha_hora: ev.fecha_hora,
+              ahora: now,
+            })
+          }
+        }, delay)
+        timers.push(timer)
+      }
+    })
+    remindersRef.current = timers
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [eventos])
 
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', fecha_hora: '', descripcion: '' })
@@ -180,7 +274,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
           {eventos.map((ev, i) => (
             <button key={ev.id} onClick={() => setEventoSeleccionado(ev)} className="w-full text-left">
               <Card className="!p-4 flex items-start gap-3 relative overflow-hidden animate-fade-up hover:shadow-md dark:hover:shadow-slate-900/50 transition-shadow" style={{ animationDelay: `${i * 0.08}s` }}>
-                <span className="text-xl flex-shrink-0 mt-0.5">{getEventIcon(ev.nombre)}</span>
+                <span className="flex-shrink-0 mt-0.5 flex items-center justify-center w-7 h-7 rounded-lg bg-church-50 dark:bg-church-950 text-church-500 dark:text-church-400"><Icon size={18}>{getEventIconName(ev.nombre)}</Icon></span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm truncate">{ev.nombre}</p>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
@@ -210,6 +304,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, data: ext
       <DetalleEventoModal
         evento={eventoSeleccionado}
         userId={userId}
+        isPredefinido={isPredefinido}
         onClose={() => setEventoSeleccionado(null)}
       />
     </section>

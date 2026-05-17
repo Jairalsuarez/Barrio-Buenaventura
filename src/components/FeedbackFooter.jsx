@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Card from './ui/Card'
 import Button from './ui/Button'
+import Icon from './ui/Icon'
 import { supabase } from '../lib/supabase'
 import { validarFeedback } from '../lib/validacion'
 
@@ -65,7 +66,7 @@ export default function FeedbackFooter({ usuarioId }) {
           </form>
         ) : (
           <div className="text-center py-4 animate-fade-scale">
-            <span className="text-3xl block mb-3">🙏</span>
+            <Icon size={36} className="block mb-3 mx-auto" fill>volunteer_activism</Icon>
             <p className="font-semibold text-gray-900 dark:text-white">Gracias por tu feedback</p>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Sirve de mucho para seguir mejorando.</p>
           </div>
