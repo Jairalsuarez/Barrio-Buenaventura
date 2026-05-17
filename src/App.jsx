@@ -80,10 +80,23 @@ export default function App() {
 
     if (!datosListos) return
     splashDone.current = true
-    splash.style.transition = 'opacity 0.5s ease-out'
+    splash.style.transition = 'opacity 0.3s ease-out'
     splash.style.opacity = '0'
-    setTimeout(() => splash.remove(), 550)
+    setTimeout(() => splash.remove(), 350)
   }, [datosListos, freshRegister])
+
+  useEffect(() => {
+    if (splashDone.current) return
+    if (autenticado) return
+    const splash = document.getElementById('splash')
+    if (!splash) return
+    const timer = setTimeout(() => {
+      splash.style.transition = 'opacity 0.3s ease-out'
+      splash.style.opacity = '0'
+      setTimeout(() => { splash.remove(); splashDone.current = true }, 350)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [autenticado])
 
   useEffect(() => {
     const timer = setTimeout(() => {
