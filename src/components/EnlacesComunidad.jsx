@@ -6,6 +6,8 @@ const MISIONEROS_NUMERO = '+593987321144'
 const WHATSAPP_GRUPO = 'https://chat.whatsapp.com/ERfiLLO223kDKtOGQf3ZpD'
 const PRESIDENTE_ELDERES = '+593969603240'
 const PRESIDENTA_SOCORRO = '+593997205663'
+const PLAY_STORE = 'https://play.google.com/store/apps/details?id=org.lds.ldssa&pcampaignid=web_share'
+const APP_STORE = 'https://apps.apple.com/es/app/biblioteca-del-evangelio/id598329798'
 
 function ContactCard({ nombre, descripcion, telefono, color }) {
   const colores = {
@@ -39,6 +41,7 @@ function ContactCard({ nombre, descripcion, telefono, color }) {
 export default function EnlacesComunidad() {
   const [interesMisional, setInteresMisional] = useState(false)
   const [respondio, setRespondio] = useState(false)
+  const [bibliotecaAbierta, setBibliotecaAbierta] = useState(false)
 
   return (
     <section className="px-5 py-8 max-w-sm mx-auto">
@@ -62,13 +65,50 @@ export default function EnlacesComunidad() {
         </div>
 
         <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
-        <ContactCard nombre="Presidente del Quórum de Élderes" descripcion="Presidente del Quórum de Élderes" telefono={PRESIDENTE_ELDERES} color="elderes" />
+        <ContactCard nombre="Presidente del Quórum de Élderes" descripcion="Presidencia del Quórum de Élderes" telefono={PRESIDENTE_ELDERES} color="elderes" />
         </div>
         <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
-        <ContactCard nombre="Presidenta de la Sociedad de Socorro" descripcion="Presidenta de la Sociedad de Socorro" telefono={PRESIDENTA_SOCORRO} color="socorro" />
+        <ContactCard nombre="Presidenta de la Sociedad de Socorro" descripcion="Presidencia de la Sociedad de Socorro" telefono={PRESIDENTA_SOCORRO} color="socorro" />
         </div>
         <div className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
         <ContactCard nombre="Misioneros" descripcion="Contacta a los misioneros" telefono={MISIONEROS_NUMERO} color="mision" />
+        </div>
+
+        <div className="animate-fade-up" style={{ animationDelay: '0.35s' }}>
+          <Card className="!p-4 !pb-3 hover:shadow-md dark:hover:shadow-slate-900/50 transition-shadow cursor-pointer" onClick={() => setBibliotecaAbierta(!bibliotecaAbierta)}>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-church-100 dark:bg-church-950 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-church-600 dark:text-church-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">Biblioteca del Evangelio</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 truncate">Descarga la app oficial</p>
+              </div>
+              <svg className={`w-5 h-5 text-gray-300 dark:text-slate-600 flex-shrink-0 transition-transform duration-200 ${bibliotecaAbierta ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            {bibliotecaAbierta && (
+              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700 space-y-2">
+                <a href={PLAY_STORE} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-slate-700/50 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                  <img src="/playstore.svg" alt="" className="w-6 h-6 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">Google Play</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Descargar en Android</p>
+                  </div>
+                </a>
+                <a href={APP_STORE} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-slate-700/50 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                  <img src="/AppStore.svg" alt="" className="w-6 h-6 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">App Store</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Descargar en iPhone</p>
+                  </div>
+                </a>
+              </div>
+            )}
+          </Card>
         </div>
 
         {!respondio && (
