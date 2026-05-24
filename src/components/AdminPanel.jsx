@@ -89,14 +89,14 @@ export default function AdminPanel({ eventos, loading, error, crear, eliminar, u
           </div>
 
           {showForm && (
-            <Card className="mb-4 !border-church-200 dark:!border-church-700 !bg-church-50 dark:!bg-slate-800">
+            <Card className="mb-4 !border-warm-200 dark:!border-slate-600 !bg-warm-50 dark:!bg-slate-800">
               <form onSubmit={handleCrear} className="space-y-3">
                 <Input label="Nombre" name="nombre" placeholder="Ej: Reunión de Barrio" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
                 <Input label="Fecha y hora" name="fecha_hora" type="datetime-local" value={form.fecha_hora} onChange={e => setForm(p => ({ ...p, fecha_hora: e.target.value }))} />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Descripción</label>
                   <textarea rows={3} placeholder="Describe el evento..." value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-church-500/40 focus:border-church-500 transition-colors resize-none" />
+                    className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 focus:border-warm-500 transition-colors resize-none" />
                 </div>
                 <Button type="submit" fullWidth disabled={creando}>{creando ? 'Creando...' : 'Crear evento'}</Button>
               </form>

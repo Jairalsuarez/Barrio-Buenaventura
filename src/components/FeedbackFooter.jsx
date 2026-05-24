@@ -47,7 +47,7 @@ export default function FeedbackFooter({ usuarioId }) {
         {!enviado ? (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-church-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-5 h-5 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
               </svg>
               <h3 className="font-semibold text-gray-900 dark:text-white">¿Cómo podemos mejorar?</h3>
@@ -58,7 +58,7 @@ export default function FeedbackFooter({ usuarioId }) {
               placeholder="Escribe tu comentario, sugerencia o reporte aquí..."
               rows={3}
               maxLength={2000}
-              className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm outline-none transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-church-400 focus:ring-2 focus:ring-church-400/20 resize-none dark:text-white"
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm outline-none transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-warm-400 focus:ring-2 focus:ring-warm-400/20 resize-none dark:text-white"
             />
             <Button type="submit" fullWidth disabled={!texto.trim() || enviando}>
               {enviando ? 'Enviando...' : 'Enviar comentario'}

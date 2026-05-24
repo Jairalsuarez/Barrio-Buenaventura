@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { format, isSunday, setHours, setMinutes, setSeconds, addWeeks, startOfMonth, differenceInMilliseconds } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { isSunday, setHours, setMinutes, setSeconds, addWeeks, startOfMonth } from 'date-fns'
+import EscrituraCard from './EscrituraCard'
 
 function getProximoDomingo9AM() {
   const ahora = new Date()
   let domingo
-  if (isSunday(ahora) && ahora.getHours() < 9) {
+  if (isSunday(ahora) && ahora.getHours() < 11) {
     domingo = ahora
   } else {
     const diasHastaDomingo = (7 - ahora.getDay()) % 7
@@ -19,9 +19,7 @@ function getProximoDomingo9AM() {
 function esPrimerDomingoDelMes(fecha) {
   const primerDia = startOfMonth(fecha)
   let primerDomingo = primerDia
-  while (primerDomingo.getDay() !== 0) {
-    primerDomingo.setDate(primerDomingo.getDate() + 1)
-  }
+  while (primerDomingo.getDay() !== 0) primerDomingo.setDate(primerDomingo.getDate() + 1)
   return fecha.getDate() === primerDomingo.getDate()
 }
 
@@ -42,135 +40,122 @@ function getGreeting() {
   return 'Buenas noches'
 }
 
-function getMemberName() {
+function getName() {
   return localStorage.getItem('iglesia_bv_name')
 }
 
-export default function HeroPrincipal({ onScrollTo }) {
+export default function HeroPrincipal({ onNavigate }) {
   const [ahora, setAhora] = useState(new Date())
-  const [userName, setUserName] = useState(getMemberName)
+  const name = getName()
+  const fullGreeting = `${getGreeting()}${name ? `, ${name}` : ''}.`
+  const [displayedText, setDisplayedText] = useState('')
 
   useEffect(() => {
-    setUserName(getMemberName())
     const id = setInterval(() => setAhora(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    setDisplayedText('')
+    let i = 0
+    const timer = setInterval(() => {
+      i++
+      setDisplayedText(fullGreeting.slice(0, i))
+      if (i >= fullGreeting.length) clearInterval(timer)
+    }, 50)
+    return () => clearInterval(timer)
+  }, [fullGreeting])
+
   const enHorario = esHorarioSacramental()
   const proxDomingo = getProximoDomingo9AM()
-  const diff = differenceInMilliseconds(proxDomingo, ahora)
-  const dias = Math.floor(diff / 86400000)
-  const horas = Math.floor((diff % 86400000) / 3600000)
-  const minutos = Math.floor((diff % 3600000) / 60000)
-  const segundos = Math.floor((diff % 60000) / 1000)
   const esAyuno = esPrimerDomingoDelMes(ahora)
+  const calStart = proxDomingo.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+  const calEnd = new Date(proxDomingo.getTime() + 2 * 3600000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+  const calUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reuni%C3%B3n+Sacramental+Barrio+Buenaventura&dates=${calStart}/${calEnd}&location=4G36%2BRJ9%2C+Buena+Fe&sf=true&output=xml`
+
+  const navItems = [
+    { id: 'actividades', label: 'Actividades', icon: 'event' },
+    { id: 'anuncios', label: 'Anuncios', icon: 'campaign' },
+    { id: 'organizaciones', label: 'Organizaciones', icon: 'groups' },
+    { id: 'recursos', label: 'Recursos', icon: 'globe' },
+    { id: 'nuevos', label: '¿Eres nuevo?', icon: 'favorite' },
+    { id: 'contactos', label: 'Contactos', icon: 'contact_phone' },
+  ]
 
   return (
-    <section className="relative min-h-[100dvh] flex flex-col overflow-hidden bg-bv-900">
-      <div className="absolute inset-0 pointer-events-none">
-        <img src="/capilla.svg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 scale-105" style={{ filter: 'saturate(0.8) contrast(1.1)' }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-bv-900/60 via-bv-900/40 to-bv-950/80" />
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-bv-300/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/3 right-0 w-60 h-60 bg-gold-400/8 rounded-full blur-[100px]" />
-      </div>
+    <div className="min-h-dvh bg-[#faf7f2] dark:bg-[#0f0f14]">
+      <div className="max-w-lg mx-auto px-5 pt-6 pb-4">
+        <div>
+          <h1 className="mt-2 text-center animate-fade-up" style={{ letterSpacing: '-0.03em' }}>
+              <span className="block font-bold text-[#1e293b] dark:text-white" style={{ fontSize: 'clamp(1.2rem, 4vw, 2rem)' }}>Barrio</span>
+              <span className="block font-bold leading-[1] -mt-1 bg-gradient-to-r from-[#8c6a43] via-[#a0784d] to-[#8c6a43] bg-clip-text text-transparent dark:from-[#c6a27b] dark:via-[#d8c3a5] dark:to-[#c6a27b] animate-fade-in" style={{ fontSize: 'clamp(2.5rem, 14vw, 7rem)', letterSpacing: '-0.04em' }}>Buenaventura</span>
+            </h1>
 
-      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 max-w-lg mx-auto w-full">
-        <div className="text-center">
-          <p className="text-[11px] text-white/40 font-medium tracking-[0.15em] uppercase animate-fade-in">
-            {format(ahora, "EEEE, d 'de' MMMM", { locale: es })}
-          </p>
-
-          <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mt-4 animate-fade-up" style={{ letterSpacing: '-0.03em' }}>
-            {getGreeting()}{userName ? `, Hermano/a ${userName}` : ''}
-          </h1>
-
-          <p className="text-sm text-white/60 mt-2 animate-fade-up animate-delay-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 400 }}>
-            Barrio Buenaventura
-          </p>
-          <p className="text-[11px] text-white/35 mt-1.5 max-w-xs mx-auto leading-relaxed animate-fade-up animate-delay-1">
-            Iglesia de Jesucristo de los Santos de los Últimos Días
-          </p>
-
-          <div className="inline-flex items-center gap-2 mt-5 bg-white/8 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 animate-scale-in animate-delay-2">
-            <svg className="w-3.5 h-3.5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-            <span className="text-xs text-white/70">4G36+RJ9, Buena Fe</span>
-          </div>
-
-          <div className="inline-flex items-center gap-2 mt-3 bg-white/6 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/8 animate-scale-in animate-delay-2">
-            <span className="material-symbols-outlined text-white/50" style={{ fontSize: 14 }}>schedule</span>
-            <span className="text-xs text-white/70">Domingo 9:00 AM — 11:00 AM</span>
-          </div>
-
-          {esAyuno && (
-            <span className="inline-block mt-3 text-[10px] text-gold-300 bg-gold-400/10 rounded-full px-3 py-1 animate-fade-in animate-delay-2">
-              Día de Ayuno y Testimonio
-            </span>
-          )}
-        </div>
-
-        {enHorario ? (
-          <div className="mt-10 text-center animate-scale-in animate-delay-2">
-            <div className="inline-flex items-center gap-2.5 bg-emerald-500/12 backdrop-blur-md rounded-2xl px-5 py-3 border border-emerald-400/15">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-              </span>
-              <span className="text-sm font-medium text-emerald-300">Reunión Sacramental en Curso</span>
+            <div className="flex flex-wrap justify-center gap-2 mt-4 animate-fade-up animate-delay-1">
+              <a href={calUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3 py-1.5 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/40 transition-colors">
+                <span className="material-symbols-outlined text-[#8c6a43]" style={{ fontSize: 13 }}>schedule</span>
+                Dom 9:00 — 11:00
+              </a>
+              <a href={`https://www.google.com/maps/search/${encodeURIComponent('4G36+RJ9, Buena Fe')}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3 py-1.5 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/40 transition-colors">
+                <span className="material-symbols-outlined text-[#8c6a43]" style={{ fontSize: 13 }}>location_on</span>
+                4G36+RJ9, Buena Fe
+              </a>
             </div>
+
+            <p className="text-base sm:text-lg text-[#64748b] dark:text-slate-400 text-center mt-4 min-h-[1.5em]">
+              {displayedText}{displayedText.length < fullGreeting.length && <span className="animate-pulse">|</span>}
+            </p>
           </div>
-        ) : (
-          <div className="mt-10 text-center animate-fade-up animate-delay-2">
-            <p className="text-[10px] text-white/35 uppercase tracking-[0.2em] mb-3">Próxima reunión</p>
-            <div className="flex justify-center gap-2 sm:gap-3">
-              {[
-                { val: dias, label: 'Días' },
-                { val: horas, label: 'Horas' },
-                { val: minutos, label: 'Min' },
-                { val: segundos, label: 'Seg' },
-              ].map((item, i) => (
-                <div key={item.label} className="text-center">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/6 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/8 shadow-lg animate-count-pop" style={{ animationDelay: `${i * 0.1 + 0.3}s` }}>
-                    <span className="text-xl sm:text-2xl font-bold text-white tabular-nums" style={{ letterSpacing: '-0.02em' }}>
-                      {String(item.val).padStart(2, '0')}
-                    </span>
-                  </div>
-                  <span className="text-[9px] text-white/35 mt-1.5 block uppercase tracking-wider">{item.label}</span>
-                </div>
-              ))}
+
+        {esAyuno && (
+          <span className="inline-flex items-center gap-1.5 mt-3 text-[12px] text-[#8c6a43] bg-[#8c6a43]/8 rounded-xl px-3.5 py-2 animate-fade-in animate-delay-1">
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restaurant</span>
+            Día de Ayuno y Testimonio
+          </span>
+        )}
+
+        {enHorario && (
+          <div className="mt-5 animate-scale-in animate-delay-2">
+            <div className="inline-flex items-center gap-2.5 bg-[#8c6a43]/10 rounded-2xl px-4 py-3 border border-[#8c6a43]/15">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8c6a43] opacity-50" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8c6a43]" />
+              </span>
+              <span className="text-sm font-medium text-[#8c6a43]">Reunión Sacramental en Curso</span>
             </div>
           </div>
         )}
 
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-2.5 animate-fade-up animate-delay-3">
-          <button onClick={() => onScrollTo?.('section-eventos')} className="btn-primary w-full sm:w-auto justify-center">
-            Ver actividades
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
-          <button onClick={() => onScrollTo?.('section-nuevos')} className="btn-secondary w-full sm:w-auto justify-center !border-white/20 !text-white hover:!bg-white/10">
-            Hablar con misioneros
-          </button>
-        </div>
+        <EscrituraCard />
 
-        <div className="mt-2 text-center animate-fade-in animate-delay-4">
-          <a href={`https://www.google.com/maps/search/${encodeURIComponent('4G36+RJ9, Buena Fe')}`} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-white/40 hover:text-white/60 transition-colors underline underline-offset-2 decoration-white/20 hover:decoration-white/40">
-            Cómo llegar a la capilla
-          </a>
+        <div className="mt-6">
+          <p className="text-[10px] text-[#64748b] dark:text-slate-500 uppercase tracking-[0.15em] mb-3">Navegación</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {navItems.map((item, i) => {
+              const icons = {
+                event: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
+                campaign: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38a.482.482 0 01-.629-.53c-.11-.598-.197-1.202-.246-1.812m0-9.18A8.44 8.44 0 0012 8.602a7.742 7.742 0 01.446-.393M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+                groups: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>,
+                globe: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>,
+                favorite: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
+                contact_phone: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 3.75v4.5m0-4.5h-4.5m4.5 0l-6 6m3 12c-8.284 0-15-6.716-15-15V4.5A2.25 2.25 0 014.5 2.25h1.372c.516 0 .966.351 1.091.852l1.106 4.423c.11.44-.054.902-.417 1.173l-1.293.97a1.062 1.062 0 00-.38 1.21 12.035 12.035 0 007.143 7.143c.441.162.928-.004 1.21-.38l.97-1.293a1.125 1.125 0 011.173-.417l4.423 1.106c.5.125.852.575.852 1.091V19.5a2.25 2.25 0 01-2.25 2.25h-2.25z" /></svg>,
+              }
+              return (
+                <button key={item.id} onClick={() => onNavigate?.(item.id)}
+                  className="flex items-center gap-3 p-3.5 rounded-xl bg-white dark:bg-white/8 border border-[#e4dcd0] dark:border-white/10 shadow-sm hover:border-[#8c6a43]/30 hover:shadow-md active:scale-[0.98] transition-all text-left animate-fade-up"
+                  style={{ animationDelay: `${i * 0.05 + 0.4}s` }}>
+                  <div className="w-9 h-9 rounded-lg bg-[#8c6a43]/10 dark:bg-[#8c6a43]/20 flex items-center justify-center flex-shrink-0 text-[#8c6a43]">
+                    {icons[item.icon]}
+                  </div>
+                  <span className="text-[13px] font-semibold text-[#1e293b] dark:text-white leading-tight">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="relative z-10 pb-6 text-center animate-breathe">
-        <button onClick={() => onScrollTo?.('section-eventos')} className="text-white/30 hover:text-white/50 transition-colors">
-          <svg className="w-5 h-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-          </svg>
-        </button>
-      </div>
-    </section>
+    </div>
   )
 }

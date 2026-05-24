@@ -211,7 +211,7 @@ export default function AuthModal({ onRegister, onLoginExisting, onGuest, loadin
                   id="tieneLlamamiento"
                   checked={tieneLlamamiento}
                   onChange={handleLlamamientoToggle}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-church-600 focus:ring-church-500 dark:bg-slate-700"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-warm-600 focus:ring-warm-500 dark:bg-slate-700"
                 />
                 <label htmlFor="tieneLlamamiento" className="text-sm text-gray-700 dark:text-slate-300 font-medium">
                   ¿Tienes un llamamiento?
@@ -247,7 +247,7 @@ export default function AuthModal({ onRegister, onLoginExisting, onGuest, loadin
                         value={telefono}
                         onChange={(e) => { setTelefono(e.target.value); setErrMsg('') }}
                       />
-                      <p className="text-xs text-church-600 dark:text-church-400 bg-church-50 dark:bg-church-950 rounded-lg px-3 py-2">
+                      <p className="text-xs text-warm-600 dark:text-warm-400 bg-warm-50 dark:bg-warm-950 rounded-lg px-3 py-2">
                         El teléfono es importante para que los miembros puedan ponerse en contacto con el líder que corresponda.
                       </p>
                     </>

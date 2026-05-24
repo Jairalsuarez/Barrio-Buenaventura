@@ -127,8 +127,8 @@ function DetalleEventoModal({ evento, userId, userLlamamiento, isPredefinido, on
                 disabled={rsvpLoading}
                 className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
                   asistira === true
-                    ? 'bg-church-600 text-white shadow-md shadow-church-600/30'
-                    : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-church-50 dark:hover:bg-church-950'
+                    ? 'bg-warm-600 text-white shadow-md shadow-warm-600/30'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-warm-50 dark:hover:bg-warm-950'
                 }`}
               >
                 Sí, asistiré
@@ -161,10 +161,10 @@ function DetalleEventoModal({ evento, userId, userLlamamiento, isPredefinido, on
                 <div className="space-y-2">
                   {queAsisten.length > 0 && (
                     <div>
-                      <p className="text-xs text-church-600 dark:text-church-400 font-medium mb-1">Asistirán ({queAsisten.length})</p>
+                      <p className="text-xs text-warm-600 dark:text-warm-400 font-medium mb-1">Asistirán ({queAsisten.length})</p>
                       <div className="flex flex-wrap gap-1.5">
                         {queAsisten.map(a => (
-                          <span key={a.usuario_id} className="text-xs bg-church-50 dark:bg-church-950 text-church-700 dark:text-church-300 rounded-full px-2.5 py-1">
+                          <span key={a.usuario_id} className="text-xs bg-warm-50 dark:bg-warm-950 text-warm-700 dark:text-warm-300 rounded-full px-2.5 py-1">
                             {a.usuarios.nombre} {a.usuarios.apellido}
                           </span>
                         ))}
@@ -329,7 +329,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, userLlama
       </div>
 
       {showForm && isPredefinido && (
-        <Card className="mb-4 !border-church-200 dark:!border-church-700 !bg-church-50 dark:!bg-slate-800">
+        <Card className="mb-4 !border-warm-200 dark:!border-warm-700 !bg-warm-50 dark:!bg-slate-800">
           <form onSubmit={handleCrear} className="space-y-3">
             <Input
               label="Nombre del evento"
@@ -353,7 +353,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, userLlama
                 placeholder="Describe el evento..."
                 value={form.descripcion}
                 onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-church-500/40 focus:border-church-500 transition-colors resize-none"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 focus:border-warm-500 transition-colors resize-none"
               />
             </div>
             <Button type="submit" fullWidth disabled={creando}>
@@ -376,7 +376,7 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, userLlama
           {eventos.map((ev, i) => (
             <div key={ev.id} onClick={() => setEventoSeleccionado(ev)} className="w-full text-left cursor-pointer">
               <Card className="!p-4 flex items-center gap-3 overflow-hidden animate-fade-up hover:shadow-md dark:hover:shadow-slate-900/50 transition-shadow" style={{ animationDelay: `${i * 0.08}s` }}>
-                <span className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-church-50 dark:bg-church-950 text-church-500 dark:text-church-400"><Icon size={20}>{getEventIconName(ev.nombre)}</Icon></span>
+                <span className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-warm-50 dark:bg-warm-950 text-warm-500 dark:text-warm-400"><Icon size={20}>{getEventIconName(ev.nombre)}</Icon></span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm truncate">{ev.nombre}</p>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
