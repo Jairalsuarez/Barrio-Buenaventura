@@ -29,7 +29,25 @@ export function useAcontecimientos(userId) {
 
   const crear = useCallback(async (nombre, fechaHora, descripcion) => {
     try {
-      const isoFecha = new Date(fechaHora).toISOString()
+      const fecha = new Date(fechaHora)
+      const inicioDia = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+      const finDia = new Date(inicioDia)
+      finDia.setDate(finDia.getDate() + 1)
+
+      const { data: existentes } = await supabase
+        .from('acontecimientos')
+        .select('id, nombre, fecha_hora')
+        .eq('nombre', nombre.trim())
+        .gte('fecha_hora', inicioDia.toISOString())
+        .lt('fecha_hora', finDia.toISOString())
+        .limit(1)
+
+      if (existentes && existentes.length > 0) {
+        setError('Ya existe un evento con ese nombre en esa fecha')
+        return null
+      }
+
+      const isoFecha = fecha.toISOString()
       const { data, error: err } = await supabase
         .from('acontecimientos')
         .insert({
@@ -56,8 +74,16 @@ export function useAcontecimientos(userId) {
     }
   }, [userId])
 
-  const eliminar = useCallback(async (id) => {
+  const eliminar = useCallback(async (id, userLlamamiento) => {
     try {
+      const evento = eventos.find(e => e.id === id)
+      if (!evento) return false
+
+      if (userLlamamiento !== 'Obispo' && evento.creado_por !== userId) {
+        setError('No tienes permiso para eliminar este evento')
+        return false
+      }
+
       const { error: err } = await supabase
         .from('acontecimientos')
         .delete()
@@ -65,10 +91,12 @@ export function useAcontecimientos(userId) {
 
       if (err) throw err
       setEventos(prev => prev.filter(e => e.id !== id))
+      return true
     } catch (err) {
       setError(err.message)
+      return false
     }
-  }, [])
+  }, [userId, eventos])
 
   return { eventos, loading, error, crear, eliminar, recargar: cargar }
 }

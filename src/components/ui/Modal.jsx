@@ -6,10 +6,12 @@ export default function Modal({ open, onClose, title, children }) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+      document.body.style.position = 'relative'
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+    }
   }, [open])
 
   if (!open) return null

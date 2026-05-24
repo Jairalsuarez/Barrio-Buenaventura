@@ -72,12 +72,6 @@ export default function FeedbackFooter({ usuarioId }) {
           </div>
         )}
       </Card>
-
-      <div className="text-center mt-6 pb-4">
-        <p className="text-xs text-gray-400 dark:text-slate-500">
-          Creado por <span className="font-semibold text-gray-500 dark:text-slate-300">Fizzia</span> &middot; 2026
-        </p>
-      </div>
     </section>
   )
 }
