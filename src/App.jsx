@@ -8,6 +8,7 @@ import PageActividades from './components/PageActividades'
 import PageEscritura from './components/PageEscritura'
 import PageAnuncios from './components/PageAnuncios'
 import PageOrganizaciones from './components/PageOrganizaciones'
+import PageGuiaOrganizacion from './components/PageGuiaOrganizacion'
 import PageRecursos from './components/PageRecursos'
 import PageNuevos from './components/PageNuevos'
 import PageContactos from './components/PageContactos'
@@ -17,9 +18,24 @@ import AdminPanel from './components/AdminPanel'
 import AuthModal from './components/AuthModal'
 import Icon from './components/ui/Icon'
 
+function AppLoadingScreen() {
+  return (
+    <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-[#faf7f2] dark:bg-[#0f0f14]">
+      <img src="/icono-barrio-sin fondo.svg" alt="" className="h-14 w-14 object-contain opacity-90" />
+      <div className="mt-6 h-1 w-28 overflow-hidden rounded-full bg-[#e4dcd0] dark:bg-white/10">
+        <div className="h-full w-1/2 rounded-full bg-[#8c6a43] dark:bg-[#c6a27b] animate-loading-bar" />
+      </div>
+      <p className="mt-4 text-xs font-medium text-[#8c6a43]/70 dark:text-[#c6a27b]/70">Preparando todo...</p>
+    </div>
+  )
+}
+
 export default function App() {
   const { user, guest, loading: authLoading, error, isPredefinido, register, loginWithUserData, loginAsGuest, logout } = useAuth()
   const acontecimientos = useAcontecimientos(user?.id)
+  const [hasName, setHasName] = useState(() => Boolean(localStorage.getItem('iglesia_bv_name')))
+  const [assetsReady, setAssetsReady] = useState(false)
+  const [entryLoading, setEntryLoading] = useState(false)
   const [page, setPage] = useState(null)
   const [dark, setDark] = useState(() => localStorage.getItem('iglesia_bv_dark') === 'true')
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -31,10 +47,52 @@ export default function App() {
     localStorage.setItem('iglesia_bv_dark', dark)
   }, [dark])
 
+  const appReady = assetsReady && (!hasName || !acontecimientos.loading)
+
   useEffect(() => {
-    const splash = document.getElementById('splash')
-    if (splash && splash.parentNode) splash.remove()
+    let cancelled = false
+
+    async function prepareApp() {
+      const loadPromise = document.readyState === 'complete'
+        ? Promise.resolve()
+        : new Promise((resolve) => window.addEventListener('load', resolve, { once: true }))
+      const fontPromise = document.fonts?.ready ?? Promise.resolve()
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 700))
+
+      await Promise.all([loadPromise, fontPromise, minDelay])
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      if (!cancelled) setAssetsReady(true)
+    }
+
+    prepareApp()
+    return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (!appReady) return
+    const splash = document.getElementById('splash')
+    if (splash && splash.parentNode) {
+      splash.style.opacity = '0'
+      window.setTimeout(() => splash.remove(), 180)
+    }
+  }, [appReady])
+
+  useEffect(() => {
+    if (!entryLoading || !hasName) return
+
+    let cancelled = false
+
+    async function finishEntryLoading() {
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 950))
+      const fontPromise = document.fonts?.ready ?? Promise.resolve()
+      await Promise.all([minDelay, fontPromise])
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      if (!cancelled) setEntryLoading(false)
+    }
+
+    finishEntryLoading()
+    return () => { cancelled = true }
+  }, [entryLoading, hasName])
 
   useEffect(() => {
     if ('onbeforeinstallprompt' in window) {
@@ -64,8 +122,17 @@ export default function App() {
     return u.llamamiento && u.llamamiento !== 'Otro' && u.llamamiento !== 'Ninguno'
   }
 
-  if (!localStorage.getItem('iglesia_bv_name')) {
-    return <NamePrompt onSave={() => window.location.reload()} />
+  function handleNameSaved() {
+    setEntryLoading(true)
+    setHasName(true)
+  }
+
+  if (!appReady || entryLoading) {
+    return <AppLoadingScreen />
+  }
+
+  if (!hasName) {
+    return <NamePrompt onSave={handleNameSaved} />
   }
 
   if (showAdminModal) {
@@ -144,6 +211,7 @@ export default function App() {
   if (page === 'escritura') return <PageEscritura onBack={() => setPage(null)} />
   if (page === 'anuncios') return <PageAnuncios onBack={() => setPage(null)} />
   if (page === 'organizaciones') return <PageOrganizaciones onBack={() => setPage(null)} />
+  if (page === 'guia-organizacion') return <PageGuiaOrganizacion onBack={() => setPage(null)} />
   if (page === 'recursos') return <PageRecursos onBack={() => setPage(null)} />
   if (page === 'nuevos') return <PageNuevos onBack={() => setPage(null)} />
   if (page === 'contactos') return <PageContactos onBack={() => setPage(null)} />

@@ -87,6 +87,11 @@ input, select, textarea, button {
   50% { opacity: 1; }
 }
 
+@keyframes loading-bar {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(220%); }
+}
+
 
 
 .animate-fade-up {
@@ -111,6 +116,10 @@ input, select, textarea, button {
 
 .animate-breathe {
   animation: breathe 3s ease-in-out infinite;
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.15s ease-in-out infinite;
 }
 
 .animate-scripture-reveal {
@@ -292,6 +301,14 @@ input, select, textarea, button {
 
 .dark .scripture-page-copy-inner span {
   color: #c6a27b;
+}
+
+.announcement-feature-button::before {
+  content: none;
+}
+
+.announcement-feature-button::after {
+  content: none;
 }
 
 .btn-primary {

@@ -22,44 +22,49 @@ export default function NamePrompt({ onSave }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-bv-900 to-bv-950 relative">
-      <div className="absolute inset-0 pointer-events-none">
-        <img src="/capilla.svg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 saturate-50" />
-        <div className="absolute inset-0 bg-gradient-to-b from-bv-900/70 via-bv-900/50 to-bv-950/90" />
+    <div className="min-h-dvh flex flex-col bg-[#faf7f2] dark:bg-[#0f0f14] relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#8c6a43]/10 blur-3xl" />
+        <div className="absolute bottom-[-120px] right-[-90px] h-72 w-72 rounded-full bg-[#c6a27b]/16 blur-3xl" />
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-        <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 shadow-xl shadow-black/20">
-          <img src="/icono-barrio-sin fondo.svg" alt="" className="w-12 h-12 brightness-0 invert opacity-90" />
-        </div>
-        <h1 className="text-2xl font-bold text-white text-center leading-tight">
-          Bienvenido al<br />Barrio Buenaventura
+
+      <div className="flex-1 flex flex-col items-center justify-center px-7 relative z-10">
+        <img src="/icono-barrio-sin fondo.svg" alt="" className="h-44 w-44 object-contain mb-7 drop-shadow-sm" />
+
+        <h1 className="text-[2rem] font-extrabold text-[#1e293b] dark:text-white text-center leading-[1.05] tracking-[-0.04em]">
+          Bienvenido
         </h1>
-        <p className="text-sm text-white/50 mt-2">¿Cómo te llamas?</p>
-        <form onSubmit={handleSubmit} className="w-full max-w-xs mt-6 space-y-3">
+
+        <form onSubmit={handleSubmit} className="w-full max-w-[330px] mt-7 space-y-3">
+          <label htmlFor="nombre" className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8c6a43]/70 dark:text-[#c6a27b]/70">
+            Tu nombre
+          </label>
           <input
+            id="nombre"
             type="text"
             value={nombre}
             onChange={handleChange}
-            placeholder="Tu nombre"
+            placeholder="Ej. Maria"
             maxLength={30}
             autoFocus
-            className="w-full rounded-2xl border border-white/10 bg-white/8 backdrop-blur-md px-4 py-3.5 text-sm text-white outline-none transition-all placeholder:text-white/30 focus:border-white/25 focus:ring-2 focus:ring-white/10"
+            className="w-full rounded-2xl border border-[#e4dcd0] bg-white px-4 py-4 text-base font-semibold text-[#1e293b] outline-none transition-all placeholder:text-[#94a3b8] focus:border-[#8c6a43]/50 focus:ring-4 focus:ring-[#8c6a43]/10 dark:border-white/10 dark:bg-white/8 dark:text-white dark:placeholder:text-slate-500"
           />
           {showWarning && (
-            <p className="text-[11px] text-gold-300/70 text-center">Solo se permite 1 nombre</p>
+            <p className="text-[11px] text-[#8c6a43] dark:text-[#c6a27b] text-center">Solo se permite 1 nombre</p>
           )}
           <button
             type="submit"
             disabled={!nombre.trim()}
-            className="w-full py-3.5 rounded-2xl bg-white text-bv-900 font-semibold text-sm shadow-lg shadow-black/20 transition-all hover:shadow-xl active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full py-4 rounded-2xl bg-[#1e293b] text-white font-bold text-sm shadow-lg shadow-slate-900/10 transition-all hover:bg-[#2a3a4f] active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed dark:bg-[#c6a27b] dark:text-[#121216]"
           >
             Entrar
           </button>
         </form>
       </div>
+
       <div className="pb-8 text-center relative z-10">
-        <p className="text-[10px] text-white/20">
-          Iglesia de Jesucristo de los Santos de los Últimos Días
+        <p className="mx-auto max-w-[300px] px-6 text-[10px] leading-relaxed text-[#8c6a43]/50 dark:text-[#c6a27b]/50">
+          Esta no es una pagina oficial de la Iglesia de Jesucristo de los Santos de los Ultimos Dias.
         </p>
       </div>
     </div>

@@ -75,7 +75,6 @@ export default function HeroPrincipal({ onNavigate }) {
 
   const navItems = [
     { id: 'actividades', label: 'Actividades', icon: 'event' },
-    { id: 'anuncios', label: 'Anuncios', icon: 'campaign' },
     { id: 'organizaciones', label: 'Organizaciones', icon: 'groups' },
     { id: 'recursos', label: 'Recursos', icon: 'globe' },
     { id: 'nuevos', label: '¿Eres nuevo?', icon: 'favorite' },
@@ -129,6 +128,57 @@ export default function HeroPrincipal({ onNavigate }) {
         )}
 
         <EscrituraCard />
+
+        <div className="mt-5 animate-fade-up animate-delay-4">
+          <button
+            onClick={() => onNavigate?.('anuncios')}
+            className="announcement-feature-button group relative w-full overflow-hidden rounded-2xl border border-[#8c6a43]/18 bg-white px-5 py-3.5 text-left shadow-sm transition-all hover:border-[#8c6a43]/35 hover:shadow-md active:scale-[0.99] dark:border-[#c6a27b]/18 dark:bg-white/8 dark:hover:bg-white/12"
+          >
+            <span className="relative z-10 flex items-center gap-4.5">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center text-[#8c6a43] dark:text-[#c6a27b]">
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 32 32" stroke="currentColor" strokeWidth={1.7}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 7.5h13A2.5 2.5 0 0125 10v12a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 017 22V10a2.5 2.5 0 012.5-2.5Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.5 12.5h9M11.5 16h6.5M11.5 19.5h8" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M23.5 11.5h2.25A2.25 2.25 0 0128 13.75v10A4.25 4.25 0 0123.75 28H12.5" />
+                </svg>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xl font-extrabold leading-none text-[#1e293b] dark:text-white">Tablero del barrio</span>
+              </span>
+              <span className="material-symbols-outlined text-[#8c6a43] transition-transform group-hover:translate-x-1 dark:text-[#c6a27b]" style={{ fontSize: 22 }}>
+                arrow_forward
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div className="organization-guide-cta mt-3 animate-fade-up animate-delay-4">
+          <div className="relative overflow-hidden rounded-2xl border border-[#e4dcd0] bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/8">
+            <div className="absolute left-4 right-4 top-0 h-px bg-gradient-to-r from-transparent via-[#8c6a43]/35 to-transparent dark:via-[#c6a27b]/35" />
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-[#8c6a43]/15 text-[#8c6a43] dark:border-[#c6a27b]/20 dark:text-[#c6a27b]">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7a4 4 0 118 0 4 4 0 01-8 0Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 21a6.5 6.5 0 0113 0" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 5.5h2M20 4.5v2" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c6a43]/65 dark:text-[#c6a27b]/70">Guía rápida</p>
+                <p className="mt-1 text-base font-extrabold leading-tight text-[#1e293b] dark:text-white">
+                  ¿Quieres saber a qué organización perteneces?
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate?.('guia-organizacion')}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e293b] px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#334155] active:scale-[0.98] dark:bg-[#c6a27b] dark:text-[#121216] dark:hover:bg-[#d8c3a5]"
+            >
+              Comenzar
+              <span className="material-symbols-outlined text-base">arrow_forward</span>
+            </button>
+          </div>
+        </div>
 
         <div className="mt-6">
           <p className="text-[10px] text-[#64748b] dark:text-slate-500 uppercase tracking-[0.15em] mb-3">Navegación</p>
