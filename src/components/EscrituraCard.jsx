@@ -199,10 +199,10 @@ export default function EscrituraCard() {
     setSharing(true)
     try {
       const file = new File([shareBlob], 'escritura-del-dia.png', { type: 'image/png' })
-      const link = 'https://iglesia-buenaventura.vercel.app'
+      const link = 'https://barriobuenaventura.vercel.app'
       const shareData = {
         files: [file],
-        text: `${frase.texto} - ${frase.referencia}\n\n${link}`
+        text: `Si vives en Buena Fe y buscas respuestas divinas, te invitamos a visitar nuestra capilla. Aprende mas en ${link}`
       }
       if (navigator.share && navigator.canShare?.(shareData)) {
         await navigator.share(shareData)
