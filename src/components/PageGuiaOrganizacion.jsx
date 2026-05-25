@@ -1,7 +1,68 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 const SEMINARIO_URL = 'https://www.churchofjesuschrist.org/study/books-and-lessons/seminary?lang=spa'
 const INSTITUTO_URL = 'https://www.churchofjesuschrist.org/study/books-and-lessons/institute?lang=spa'
+
+const PRESIDENTES = {
+  'Guardería': { nombre: 'Hermana María Pérez', telefono: '099 999 0001' },
+  'Primaria': { nombre: 'Hermana Ana Gómez', telefono: '099 999 0002' },
+  'Mujeres Jóvenes': { nombre: 'Hermana Laura Martínez', telefono: '099 999 0003' },
+  'Cuórum del Sacerdocio Aarónico': { nombre: 'Hermano Carlos López', telefono: '099 999 0004' },
+  'Sociedad de Socorro': { nombre: 'Hermana Rosa Castillo', telefono: '099 999 0005' },
+  'Cuórum de Élderes': { nombre: 'Hermano Pedro Sánchez', telefono: '099 999 0006' },
+}
+
+function createConfetti() {
+  const colors = ['#8c6a43', '#c6a27b', '#e4dcd0', '#7a8f6b', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7']
+  const particles = []
+  for (let i = 0; i < 80; i++) {
+    const color = colors[Math.floor(Math.random() * colors.length)]
+    const left = Math.random() * 100
+    const delay = Math.random() * 0.5
+    const duration = 1.5 + Math.random() * 2
+    const size = 6 + Math.random() * 8
+    const rotation = Math.random() * 720 - 360
+    particles.push({ color, left, delay, duration, size, rotation })
+  }
+  return particles
+}
+
+function Confetti({ active }) {
+  const [particles, setParticles] = useState([])
+
+  useEffect(() => {
+    if (active) {
+      setParticles(createConfetti())
+      const timer = setTimeout(() => setParticles([]), 4000)
+      return () => clearTimeout(timer)
+    } else {
+      setParticles([])
+    }
+  }, [active])
+
+  if (particles.length === 0) return null
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute top-0 animate-confetti-fall"
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size * 0.6,
+            backgroundColor: p.color,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            transform: `rotate(${p.rotation}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
 function getRecomendacion({ edad, sexo, estadoCivil }) {
   const age = Number(edad)
@@ -12,80 +73,24 @@ function getRecomendacion({ edad, sexo, estadoCivil }) {
   if (!Number.isFinite(age) || age < 0) return null
 
   if (age < 2) {
-    return {
-      titulo: 'Con tu familia',
-      subtitulo: 'Aún no hay una organización formal para esta edad.',
-      detalle: 'Los niños más pequeños suelen permanecer con sus padres o cuidadores durante las reuniones.',
-      extras: []
-    }
+    return { titulo: 'Con tu familia', presidente: null }
   }
 
   if (age < 3) {
-    return {
-      titulo: 'Guardería',
-      subtitulo: 'Para niños pequeños.',
-      detalle: 'Si el barrio cuenta con guardería disponible, esta es la mejor opción para esta etapa.',
-      extras: []
-    }
+    return { titulo: 'Guardería', presidente: PRESIDENTES['Guardería'] }
   }
 
   if (age <= 11) {
-    return {
-      titulo: 'Primaria',
-      subtitulo: 'Para niños de 3 a 11 años.',
-      detalle: 'Alli aprenden sobre Jesucristo con clases, canciones y actividades apropiadas para su edad.',
-      extras: []
-    }
+    return { titulo: 'Primaria', presidente: PRESIDENTES['Primaria'] }
   }
 
   if (age <= 17) {
     const titulo = esMujer ? 'Mujeres Jóvenes' : esHombre ? 'Cuórum del Sacerdocio Aarónico' : 'Jóvenes'
-    const detalle = esMujer
-      ? 'Es la organización dominical para jovencitas.'
-      : esHombre
-        ? 'Es la organización dominical para jóvenes varones.'
-        : 'Un líder puede ayudarte a ubicar la clase de jóvenes que corresponda.'
-
-    return {
-      titulo,
-      subtitulo: 'Para jóvenes de 12 a 17 años.',
-      detalle,
-      extras: age >= 14 ? [
-        {
-          titulo: 'Tambien te recomendamos Seminario',
-          texto: 'Si estás en edad de Seminario, pregunta por la clase local y revisa los recursos oficiales.',
-          url: SEMINARIO_URL,
-          label: 'Ver recursos de Seminario'
-        }
-      ] : []
-    }
+    return { titulo, presidente: PRESIDENTES[titulo] || null }
   }
 
-  const organizacionAdultos = esMujer ? 'Sociedad de Socorro' : esHombre ? 'Cuórum de Élderes' : 'Clase de adultos'
-  const detalleAdultos = esMujer
-    ? 'Es la organización dominical para mujeres adultas.'
-    : esHombre
-      ? 'Es la organización dominical para hombres adultos.'
-      : 'Un líder puede ayudarte a encontrar la clase dominical para adultos que corresponda.'
-
-  const extras = []
-  if (age <= 35) {
-    extras.push({
-      titulo: esSoltero ? 'También puedes participar con JAS' : 'También puedes asistir a Instituto',
-      texto: esSoltero
-        ? 'Como joven adulto soltero, puedes participar en actividades de JAS y se recomienda asistir a Instituto.'
-        : 'Los jóvenes adultos también son bienvenidos a Instituto.',
-      url: INSTITUTO_URL,
-      label: 'Ver recursos de Instituto'
-    })
-  }
-
-  return {
-    titulo: organizacionAdultos,
-    subtitulo: age <= 35 && esSoltero ? 'Tu organización dominical, con apoyo de JAS.' : 'Tu organización dominical.',
-    detalle: detalleAdultos,
-    extras
-  }
+  const titulo = esMujer ? 'Sociedad de Socorro' : esHombre ? 'Cuórum de Élderes' : 'Clase de adultos'
+  return { titulo, presidente: PRESIDENTES[titulo] || null }
 }
 
 function OptionButton({ active, children, onClick }) {
@@ -115,7 +120,7 @@ export default function PageGuiaOrganizacion({ onBack }) {
     [edad, sexo, estadoCivil]
   )
 
-  const puedeCalcular = edad !== '' && sexo && estadoCivil
+  const puedeCalcular = edad !== '' && sexo && (Number(edad) >= 12 ? estadoCivil : true)
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -124,6 +129,7 @@ export default function PageGuiaOrganizacion({ onBack }) {
 
   return (
     <div className="min-h-dvh bg-[#faf7f2] dark:bg-[#0f0f14]">
+      <Confetti active={submitted} />
       <div className="max-w-lg mx-auto px-5 pb-8">
         <div className="page-header">
           <button onClick={onBack} className="page-back" aria-label="Volver">
@@ -135,15 +141,9 @@ export default function PageGuiaOrganizacion({ onBack }) {
         </div>
 
         <section className="mt-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8c6a43]/70 dark:text-[#c6a27b]/70">
-            Domingos
-          </p>
-          <h2 className="mt-2 text-3xl font-extrabold leading-tight tracking-[-0.04em] text-[#1e293b] dark:text-white">
+          <h2 className="text-3xl font-extrabold leading-tight tracking-[-0.04em] text-[#1e293b] dark:text-white">
             Encuentra tu organización
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-[#64748b] dark:text-slate-400">
-            Responde unas preguntas rápidas y te diremos a qué clase u organización puedes asistir.
-          </p>
         </section>
 
         <form onSubmit={handleSubmit} className="mt-7 space-y-5">
@@ -172,20 +172,31 @@ export default function PageGuiaOrganizacion({ onBack }) {
               Sexo
             </p>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <OptionButton active={sexo === 'mujer'} onClick={() => { setSexo('mujer'); setSubmitted(false) }}>Mujer</OptionButton>
-              <OptionButton active={sexo === 'hombre'} onClick={() => { setSexo('hombre'); setSubmitted(false) }}>Hombre</OptionButton>
+              {Number(edad) < 12 && edad !== '' ? (
+                <>
+                  <OptionButton active={sexo === 'mujer'} onClick={() => { setSexo('mujer'); setSubmitted(false) }}>Niña</OptionButton>
+                  <OptionButton active={sexo === 'hombre'} onClick={() => { setSexo('hombre'); setSubmitted(false) }}>Niño</OptionButton>
+                </>
+              ) : (
+                <>
+                  <OptionButton active={sexo === 'mujer'} onClick={() => { setSexo('mujer'); setSubmitted(false) }}>Mujer</OptionButton>
+                  <OptionButton active={sexo === 'hombre'} onClick={() => { setSexo('hombre'); setSubmitted(false) }}>Hombre</OptionButton>
+                </>
+              )}
             </div>
           </div>
 
-          <div>
-            <p className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8c6a43]/70 dark:text-[#c6a27b]/70">
-              Estado civil
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <OptionButton active={estadoCivil === 'soltero'} onClick={() => { setEstadoCivil('soltero'); setSubmitted(false) }}>Soltero/a</OptionButton>
-              <OptionButton active={estadoCivil === 'casado'} onClick={() => { setEstadoCivil('casado'); setSubmitted(false) }}>Casado/a</OptionButton>
+          {(!edad || Number(edad) >= 12) && (
+            <div>
+              <p className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8c6a43]/70 dark:text-[#c6a27b]/70">
+                Estado civil
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <OptionButton active={estadoCivil === 'soltero'} onClick={() => { setEstadoCivil('soltero'); setSubmitted(false) }}>Soltero/a</OptionButton>
+                <OptionButton active={estadoCivil === 'casado'} onClick={() => { setEstadoCivil('casado'); setSubmitted(false) }}>Casado/a</OptionButton>
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
@@ -197,40 +208,39 @@ export default function PageGuiaOrganizacion({ onBack }) {
         </form>
 
         {submitted && recomendacion && (
-          <section className="mt-7 rounded-2xl border border-[#e4dcd0] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/8">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8c6a43]/70 dark:text-[#c6a27b]/70">
-              Recomendación
-            </p>
-            <h3 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-[#1e293b] dark:text-white">
-              {recomendacion.titulo}
+          <section className="mt-7 rounded-2xl border-2 border-[#c6a27b]/30 bg-white p-6 shadow-lg shadow-[#8c6a43]/10 text-center dark:border-[#c6a27b]/20 dark:bg-white/8">
+            <span className="text-4xl">🎉</span>
+            <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-[#1e293b] dark:text-white">
+              ¡Felicidades!
             </h3>
-            <p className="mt-1 text-sm font-semibold text-[#8c6a43] dark:text-[#c6a27b]">
-              {recomendacion.subtitulo}
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-[#64748b] dark:text-slate-400">
-              {recomendacion.detalle}
+            <p className="mt-1 text-lg font-bold text-[#8c6a43] dark:text-[#c6a27b]">
+              Perteneces a {recomendacion.titulo}
             </p>
 
-            {recomendacion.extras.length > 0 && (
-              <div className="mt-5 space-y-3">
-                {recomendacion.extras.map((extra) => (
-                  <a
-                    key={extra.titulo}
-                    href={extra.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block rounded-xl border border-[#e4dcd0] bg-[#faf7f2] p-4 transition-colors hover:border-[#8c6a43]/35 dark:border-white/10 dark:bg-black/10"
-                  >
-                    <span className="block text-sm font-bold text-[#1e293b] dark:text-white">{extra.titulo}</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-[#64748b] dark:text-slate-400">{extra.texto}</span>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#8c6a43] dark:text-[#c6a27b]">
-                      {extra.label}
-                      <span className="material-symbols-outlined text-sm">open_in_new</span>
-                    </span>
-                  </a>
-                ))}
+            {recomendacion.presidente && (
+              <div className="mt-5 rounded-xl bg-[#faf7f2] p-4 text-left dark:bg-black/10">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c6a43]/60 dark:text-[#c6a27b]/60">
+                  Presidente de la organización
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[#1e293b] dark:text-white">
+                  {recomendacion.presidente.nombre}
+                </p>
+                <a
+                  href={`tel:${recomendacion.presidente.telefono}`}
+                  className="mt-1 inline-flex items-center gap-1.5 text-sm font-bold text-[#8c6a43] hover:text-[#a0784d] dark:text-[#c6a27b]"
+                >
+                  <span className="material-symbols-outlined text-base">call</span>
+                  {recomendacion.presidente.telefono}
+                </a>
               </div>
             )}
+            <button
+              onClick={() => { setSubmitted(false); setEdad(''); setSexo(''); setEstadoCivil('') }}
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#8c6a43] hover:text-[#a0784d] transition-colors dark:text-[#c6a27b]"
+            >
+              <span className="material-symbols-outlined text-base">refresh</span>
+              Volver a intentar
+            </button>
           </section>
         )}
       </div>

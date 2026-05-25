@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useAcontecimientos } from './hooks/useAcontecimientos'
 import NamePrompt from './components/NamePrompt'
@@ -18,14 +18,37 @@ import AdminPanel from './components/AdminPanel'
 import AuthModal from './components/AuthModal'
 import Icon from './components/ui/Icon'
 
-function AppLoadingScreen() {
+function AppLoadingScreen({ name, progress, displayedText }) {
+  const h = new Date().getHours()
+  const saludo = h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches'
+
   return (
-    <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-[#faf7f2] dark:bg-[#0f0f14]">
-      <img src="/icono-barrio-sin fondo.svg" alt="" className="h-14 w-14 object-contain opacity-90" />
-      <div className="mt-6 h-1 w-28 overflow-hidden rounded-full bg-[#e4dcd0] dark:bg-white/10">
-        <div className="h-full w-1/2 rounded-full bg-[#8c6a43] dark:bg-[#c6a27b] animate-loading-bar" />
-      </div>
-      <p className="mt-4 text-xs font-medium text-[#8c6a43]/70 dark:text-[#c6a27b]/70">Preparando todo...</p>
+    <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-between bg-[#faf7f2] dark:bg-[#0f0f14] px-8 py-16 sm:py-20 text-center">
+      {name ? (
+        <>
+          <div className="flex flex-col items-center justify-center flex-1">
+            <img src="/icono-barrio-sin fondo.svg" alt="" className="h-24 w-24 object-contain opacity-80 mb-8" />
+            <p className="text-5xl sm:text-7xl font-bold text-[#1e293b] dark:text-white/90 leading-[1.1] text-center">
+              {displayedText}
+            </p>
+            <p className="text-xl sm:text-2xl text-[#64748b] dark:text-slate-400 mt-4 font-light">es un gusto tenerte aquí</p>
+          </div>
+          <div className="w-72 sm:w-96 mb-12">
+            <p className="text-xs text-[#8c6a43]/50 dark:text-[#c6a27b]/40 uppercase tracking-[0.2em] font-semibold mb-2.5 text-center">Actualizando datos</p>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e4dcd0] dark:bg-white/8">
+              <div className="h-full rounded-full bg-[#8c6a43] dark:bg-[#c6a27b] transition-all duration-200 ease-out" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <img src="/icono-barrio-sin fondo.svg" alt="" className="h-14 w-14 object-contain opacity-90" />
+          <div className="mt-6 h-1 w-28 overflow-hidden rounded-full bg-[#e4dcd0] dark:bg-white/10">
+            <div className="h-full w-1/2 rounded-full bg-[#8c6a43] dark:bg-[#c6a27b] animate-loading-bar" />
+          </div>
+          <p className="mt-4 text-xs font-medium text-[#8c6a43]/70 dark:text-[#c6a27b]/70">Preparando todo...</p>
+        </>
+      )}
     </div>
   )
 }
@@ -35,8 +58,15 @@ export default function App() {
   const acontecimientos = useAcontecimientos(user?.id)
   const [hasName, setHasName] = useState(() => Boolean(localStorage.getItem('iglesia_bv_name')))
   const [assetsReady, setAssetsReady] = useState(false)
-  const [entryLoading, setEntryLoading] = useState(false)
-  const [page, setPage] = useState(null)
+  const [entryLoading, setEntryLoading] = useState(() => Boolean(localStorage.getItem('iglesia_bv_name')))
+  const [loadProgress, setLoadProgress] = useState(0)
+  const [displayedText, setDisplayedText] = useState('')
+  const [page, setPageState] = useState(null)
+
+  const setPage = useCallback((p) => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    setPageState(p)
+  }, [])
   const [dark, setDark] = useState(() => localStorage.getItem('iglesia_bv_dark') === 'true')
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
@@ -69,30 +99,43 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!appReady) return
-    const splash = document.getElementById('splash')
-    if (splash && splash.parentNode) {
-      splash.style.opacity = '0'
-      window.setTimeout(() => splash.remove(), 180)
-    }
-  }, [appReady])
-
-  useEffect(() => {
     if (!entryLoading || !hasName) return
 
     let cancelled = false
 
+    const progressTimer = setInterval(() => {
+      if (!cancelled) setLoadProgress((prev) => {
+        const next = Math.min(prev + Math.random() * 8 + 2, 100)
+        return next
+      })
+    }, 180)
+
     async function finishEntryLoading() {
-      const minDelay = new Promise((resolve) => setTimeout(resolve, 950))
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 2000))
       const fontPromise = document.fonts?.ready ?? Promise.resolve()
       await Promise.all([minDelay, fontPromise])
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-      if (!cancelled) setEntryLoading(false)
+      if (!cancelled) {
+        setLoadProgress(100)
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        setEntryLoading(false)
+      }
     }
 
     finishEntryLoading()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      clearInterval(progressTimer)
+    }
   }, [entryLoading, hasName])
+
+  useEffect(() => {
+    if (!hasName) return
+    const name = localStorage.getItem('iglesia_bv_name') || ''
+    const h = new Date().getHours()
+    const saludo = h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches'
+    setDisplayedText(`${saludo}, ${name}`)
+  }, [hasName])
 
   useEffect(() => {
     if ('onbeforeinstallprompt' in window) {
@@ -128,7 +171,7 @@ export default function App() {
   }
 
   if (!appReady || entryLoading) {
-    return <AppLoadingScreen />
+    return <AppLoadingScreen name={localStorage.getItem('iglesia_bv_name')} progress={loadProgress} displayedText={displayedText} />
   }
 
   if (!hasName) {

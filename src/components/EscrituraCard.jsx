@@ -130,7 +130,7 @@ async function generarImagen(frase) {
 
   ctx.fillStyle = '#172033'
   ctx.textAlign = 'center'
-  ctx.font = `700 ${fitted.size}px Georgia, "Times New Roman", serif`
+  ctx.font = `700 ${fitted.size}px "EB Garamond", serif`
   const textStartY = 520 - ((fitted.lines.length - 1) * fitted.lineHeight) / 2
   fitted.lines.forEach((line, index) => {
     ctx.fillText(line, w / 2, textStartY + index * fitted.lineHeight)
@@ -170,7 +170,6 @@ function getScriptureLengthClass(texto) {
 export default function EscrituraCard() {
   const [liked, setLiked] = useState(() => localStorage.getItem('iglesia_bv_scripture_liked') === 'true')
   const [sharing, setSharing] = useState(false)
-  const [revealed, setRevealed] = useState(false)
   const [shareBlob, setShareBlob] = useState(null)
   const cardRef = useRef(null)
   const frase = getFraseDelDia()
@@ -222,18 +221,7 @@ export default function EscrituraCard() {
 
   return (
     <div className="mt-5 flex flex-col items-center">
-      {!revealed && (
-        <button
-          type="button"
-          onClick={() => setRevealed(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-[#8c6a43]/20 bg-white px-5 py-3 text-sm font-semibold text-[#8c6a43] shadow-sm shadow-[#8c6a43]/5 transition-all hover:border-[#8c6a43]/35 hover:bg-[#fffaf3] active:scale-[0.98] dark:border-[#c6a27b]/20 dark:bg-white/8 dark:text-[#c6a27b] dark:hover:bg-white/12"
-        >
-          <span className="material-symbols-outlined text-[18px]">auto_stories</span>
-          Revelar escritura del dia
-        </button>
-      )}
-
-      <div ref={cardRef} className={`relative w-[92vw] max-w-[520px] mx-auto ${revealed ? 'mt-4 scripture-book-revealed' : 'mt-0 hidden'}`} style={{ perspective: '1200px' }}>
+      <div ref={cardRef} className="relative w-[92vw] max-w-[520px] mx-auto mt-4 scripture-book-revealed" style={{ perspective: '1200px' }}>
         <div className="relative scripture-animation-stage">
           <svg viewBox="0 0 500 425" className="w-full h-full overflow-visible" fill="none" aria-hidden="true">
             <g className="scripture-book-camera">
@@ -264,18 +252,26 @@ export default function EscrituraCard() {
       </div>
 
       <div className="flex items-center justify-center gap-2 mt-4">
-        <button onClick={toggleLike}
-          className="inline-flex items-center gap-1.5 text-xs text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3.5 py-2 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/30 transition-colors active:scale-95">
-          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>
-            favorite
-          </span>
-          {liked ? 'Te gusta' : 'Me gusta'}
-        </button>
-        <button onClick={compartir} disabled={sharing || !shareBlob}
-          className="inline-flex items-center gap-1.5 text-xs text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3.5 py-2 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/30 transition-colors active:scale-95 disabled:opacity-50">
-          <span className="material-symbols-outlined text-sm">ios_share</span>
-          {!shareBlob ? 'Preparando...' : sharing ? 'Compartiendo...' : 'Compartir'}
-        </button>
+          <button onClick={toggleLike}
+            className="inline-flex items-center gap-1.5 text-xs text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3.5 py-2 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/30 transition-colors active:scale-95">
+            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>
+              favorite
+            </span>
+            {liked ? 'Te gusta' : 'Me gusta'}
+          </button>
+          <button onClick={compartir} disabled={sharing || !shareBlob}
+            className="inline-flex items-center gap-1.5 text-xs text-[#64748b] dark:text-slate-400 bg-white dark:bg-white/8 rounded-full px-3.5 py-2 border border-[#e4dcd0] dark:border-white/10 hover:border-[#8c6a43]/30 transition-colors active:scale-95 disabled:opacity-50">
+            <span className="material-symbols-outlined text-sm">ios_share</span>
+            {!shareBlob ? 'Preparando...' : sharing ? 'Compartiendo...' : 'Compartir'}
+          </button>
+        </div>
+      <div className="relative mt-5 w-full max-w-[340px]">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#e4dcd0] dark:border-white/8" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[#faf7f2] dark:bg-[#0f0f14] px-3 text-[9px] text-[#8c6a43]/60 dark:text-[#c6a27b]/50 uppercase tracking-[0.2em] font-semibold">social</span>
+        </div>
       </div>
     </div>
   )
