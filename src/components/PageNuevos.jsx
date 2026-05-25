@@ -284,8 +284,8 @@ export default function PageNuevos({ onBack }) {
   }
 
   return (
-    <div className="h-dvh overflow-hidden bg-[#faf7f2] dark:bg-[#0f0f14] flex flex-col">
-      <div className="max-w-lg mx-auto w-full px-5 flex flex-col flex-1">
+    <div className="min-h-dvh bg-[#faf7f2] dark:bg-[#0f0f14] flex flex-col">
+      <div className="max-w-lg mx-auto w-full px-5 flex flex-col flex-1 min-h-dvh">
         <div className="page-header flex-shrink-0">
           <button onClick={onBack} className="page-back" aria-label="Volver">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -295,7 +295,7 @@ export default function PageNuevos({ onBack }) {
           <h1 className="page-title">Conoce la Iglesia</h1>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center min-h-0 -mt-4">
+        <div className="flex-1 flex flex-col justify-center py-4">
           <div className="text-center">
             {userName && <p className="text-6xl font-extrabold text-[#8c6a43] dark:text-[#c6a27b] tracking-[-0.04em] leading-none">{userName}</p>}
             <h2 className="text-4xl font-extrabold tracking-[-0.04em] text-[#1e293b] dark:text-white leading-tight mt-1">
