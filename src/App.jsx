@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useAcontecimientos } from './hooks/useAcontecimientos'
+import { getNombre, setNombre, setDarkMode, getDarkMode } from './lib/session'
 import NamePrompt from './components/NamePrompt'
 import TopNav from './components/TopNav'
 import HeroPrincipal from './components/HeroPrincipal'
@@ -11,8 +12,8 @@ import PageOrganizaciones from './components/PageOrganizaciones'
 import PageGuiaOrganizacion from './components/PageGuiaOrganizacion'
 import PageRecursos from './components/PageRecursos'
 import PageNuevos from './components/PageNuevos'
+import PageHerramientas from './components/PageHerramientas'
 import PageContactos from './components/PageContactos'
-import FeedbackFooter from './components/FeedbackFooter'
 import FooterLanding from './components/FooterLanding'
 import AdminPanel from './components/AdminPanel'
 import AuthModal from './components/AuthModal'
@@ -54,27 +55,28 @@ function AppLoadingScreen({ name, progress, displayedText }) {
 }
 
 export default function App() {
-  const { user, guest, loading: authLoading, error, isPredefinido, register, loginWithUserData, loginAsGuest, logout } = useAuth()
+  const { user, session, loading: authLoading, error, isPredefinido, register, login, logout } = useAuth()
   const acontecimientos = useAcontecimientos(user?.id)
-  const [hasName, setHasName] = useState(() => Boolean(localStorage.getItem('iglesia_bv_name')))
+  const [hasName, setHasName] = useState(() => Boolean(getNombre()))
   const [assetsReady, setAssetsReady] = useState(false)
-  const [entryLoading, setEntryLoading] = useState(() => Boolean(localStorage.getItem('iglesia_bv_name')))
+  const [entryLoading, setEntryLoading] = useState(() => Boolean(getNombre()))
   const [loadProgress, setLoadProgress] = useState(0)
   const [displayedText, setDisplayedText] = useState('')
   const [page, setPageState] = useState(null)
 
   const setPage = useCallback((p) => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    window.scrollTo(0, 0)
     setPageState(p)
   }, [])
-  const [dark, setDark] = useState(() => localStorage.getItem('iglesia_bv_dark') === 'true')
+  const [dark, setDark] = useState(() => getDarkMode())
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
+  const [authError, setAuthError] = useState(null)
   const [installPrompt, setInstallPrompt] = useState(null)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('iglesia_bv_dark', dark)
+    setDarkMode(dark)
   }, [dark])
 
   const appReady = assetsReady && (!hasName || !acontecimientos.loading)
@@ -131,7 +133,7 @@ export default function App() {
 
   useEffect(() => {
     if (!hasName) return
-    const name = localStorage.getItem('iglesia_bv_name') || ''
+    const name = getNombre()
     const h = new Date().getHours()
     const saludo = h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches'
     setDisplayedText(`${saludo}, ${name}`)
@@ -145,33 +147,51 @@ export default function App() {
     }
   }, [])
 
-  const autenticado = !!user || guest
-
-  function handleLogout() {
-    logout()
-    setShowAdminPanel(false)
+  function handleNameSaved(name) {
+    setEntryLoading(true)
+    setHasName(true)
   }
 
   function handleAdminClick() {
-    if (autenticado && isPredefinido) {
+    if (session && isPredefinido) {
       setShowAdminPanel(!showAdminPanel)
     } else {
       setShowAdminModal(true)
     }
   }
 
-  function isUserPredefinido(u) {
-    if (!u) return false
-    return u.llamamiento && u.llamamiento !== 'Otro' && u.llamamiento !== 'Ninguno'
+  async function handleLogin(email, password) {
+    setAuthError(null)
+    const usuario = await login(email, password)
+    if (usuario) {
+      setShowAdminModal(false)
+      const predef = usuario.llamamiento && usuario.llamamiento !== 'Otro' && usuario.llamamiento !== 'Ninguno'
+      if (predef) setShowAdminPanel(true)
+    } else {
+      const err = error || 'Error al iniciar sesión'
+      setAuthError(err)
+    }
   }
 
-  function handleNameSaved() {
-    setEntryLoading(true)
-    setHasName(true)
+  async function handleRegister(email, password, profile) {
+    setAuthError(null)
+    const usuario = await register(email, password, profile)
+    if (usuario) {
+      setShowAdminModal(false)
+      const predef = usuario.llamamiento && usuario.llamamiento !== 'Otro' && usuario.llamamiento !== 'Ninguno'
+      if (predef) setShowAdminPanel(true)
+    } else {
+      setAuthError(error || 'Error al registrarse')
+    }
+  }
+
+  function handleLogout() {
+    logout()
+    setShowAdminPanel(false)
   }
 
   if (!appReady || entryLoading) {
-    return <AppLoadingScreen name={localStorage.getItem('iglesia_bv_name')} progress={loadProgress} displayedText={displayedText} />
+    return <AppLoadingScreen name={getNombre()} progress={loadProgress} displayedText={displayedText} />
   }
 
   if (!hasName) {
@@ -181,22 +201,11 @@ export default function App() {
   if (showAdminModal) {
     return (
       <AuthModal
-        onRegister={async (formData) => {
-          const userData = await register(formData)
-          setShowAdminModal(false)
-          setShowAdminPanel(isUserPredefinido(userData))
-        }}
-        onLoginExisting={(userData) => {
-          loginWithUserData(userData)
-          setShowAdminModal(false)
-          setShowAdminPanel(isUserPredefinido(userData))
-        }}
-        onGuest={() => {
-          loginAsGuest()
-          setShowAdminModal(false)
-        }}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onClose={() => setShowAdminModal(false)}
         loading={authLoading}
-        error={error}
+        error={authError}
       />
     )
   }
@@ -227,7 +236,7 @@ export default function App() {
               </button>
               <button onClick={handleLogout}
                 className="text-xs text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 bg-gray-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 transition-colors">
-                Salir
+                {user ? `${user.nombre} · Salir` : 'Salir'}
               </button>
               <button onClick={() => setShowAdminPanel(false)}
                 className="text-xs bg-[#8c6a43] text-white rounded-lg px-3 py-1.5 font-medium hover:bg-[#a0784d] transition-colors">
@@ -258,13 +267,13 @@ export default function App() {
   if (page === 'recursos') return <PageRecursos onBack={() => setPage(null)} />
   if (page === 'nuevos') return <PageNuevos onBack={() => setPage(null)} />
   if (page === 'contactos') return <PageContactos onBack={() => setPage(null)} />
+  if (page === 'herramientas') return <PageHerramientas onBack={() => setPage(null)} onNavigate={setPage} />
 
   return (
     <div className="min-h-dvh relative bg-[#faf7f2] dark:bg-[#0f0f14]">
       <TopNav dark={dark} onToggleDark={() => setDark(!dark)} onNavigate={setPage} onAdminClick={handleAdminClick} />
       <HeroPrincipal onNavigate={setPage} />
 
-      <FeedbackFooter />
       <FooterLanding />
 
       {installPrompt && (

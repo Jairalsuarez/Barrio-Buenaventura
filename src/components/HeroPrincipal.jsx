@@ -48,12 +48,6 @@ export default function HeroPrincipal({ onNavigate }) {
   const calEnd = new Date(proxDomingo.getTime() + 2 * 3600000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
   const calUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reuni%C3%B3n+Sacramental+Barrio+Buenaventura&dates=${calStart}/${calEnd}&location=4G36%2BRJ9%2C+Buena+Fe&sf=true&output=xml`
 
-  const navItems = [
-    { id: 'recursos', label: 'Recursos', icon: 'globe' },
-    { id: 'nuevos', label: '¿Eres nuevo?', icon: 'favorite' },
-    { id: 'contactos', label: 'Contactos', icon: 'contact_phone' },
-  ]
-
   return (
     <div className="min-h-dvh bg-[#faf7f2] dark:bg-[#0f0f14]">
       <div className="max-w-lg mx-auto px-5 pt-6 pb-4">
@@ -101,19 +95,6 @@ export default function HeroPrincipal({ onNavigate }) {
 
         <div className="mt-5 text-center">
           <p className="text-base font-extrabold leading-tight text-[#1e293b] dark:text-white">
-            ¿Quieres saber a qué organización perteneces?
-          </p>
-          <button
-            onClick={() => onNavigate?.('guia-organizacion')}
-            className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-[#1e293b] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#334155] active:scale-[0.98] dark:bg-[#c6a27b] dark:text-[#121216] dark:hover:bg-[#d8c3a5]"
-          >
-            Comenzar
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
-          </button>
-        </div>
-
-        <div className="mt-5 text-center">
-          <p className="text-base font-extrabold leading-tight text-[#1e293b] dark:text-white">
             ¿Estás conociendo la iglesia?
           </p>
           <button
@@ -148,26 +129,17 @@ export default function HeroPrincipal({ onNavigate }) {
           </button>
         </div>
 
-        <div className="mt-6">
-          <p className="text-[10px] text-[#64748b] dark:text-slate-500 uppercase tracking-[0.15em] mb-3">Navegación</p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {navItems.map((item, i) => {
-              const icons = {
-                globe: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>,
-                favorite: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
-                contact_phone: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 3.75v4.5m0-4.5h-4.5m4.5 0l-6 6m3 12c-8.284 0-15-6.716-15-15V4.5A2.25 2.25 0 014.5 2.25h1.372c.516 0 .966.351 1.091.852l1.106 4.423c.11.44-.054.902-.417 1.173l-1.293.97a1.062 1.062 0 00-.38 1.21 12.035 12.035 0 007.143 7.143c.441.162.928-.004 1.21-.38l.97-1.293a1.125 1.125 0 011.173-.417l4.423 1.106c.5.125.852.575.852 1.091V19.5a2.25 2.25 0 01-2.25 2.25h-2.25z" /></svg>,
-              }
-              return (
-                <button key={item.id} onClick={() => onNavigate?.(item.id)}
-                  className="flex items-center gap-3 p-3.5 rounded-xl bg-white dark:bg-white/8 border border-[#e4dcd0] dark:border-white/10 shadow-sm hover:border-[#8c6a43]/30 hover:shadow-md active:scale-[0.98] transition-all text-left">
-                  <div className="w-9 h-9 rounded-lg bg-[#8c6a43]/10 dark:bg-[#8c6a43]/20 flex items-center justify-center flex-shrink-0 text-[#8c6a43]">
-                    {icons[item.icon]}
-                  </div>
-                  <span className="text-[13px] font-semibold text-[#1e293b] dark:text-white leading-tight">{item.label}</span>
-                </button>
-              )
-            })}
-          </div>
+        <div className="mt-5 text-center">
+          <p className="text-base font-extrabold leading-tight text-[#1e293b] dark:text-white">
+            Herramientas
+          </p>
+          <button
+            onClick={() => onNavigate?.('herramientas')}
+            className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-[#1e293b] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#334155] active:scale-[0.98] dark:bg-[#c6a27b] dark:text-[#121216] dark:hover:bg-[#d8c3a5]"
+          >
+            Abrir
+            <span className="material-symbols-outlined text-base">arrow_forward</span>
+          </button>
         </div>
       </div>
     </div>

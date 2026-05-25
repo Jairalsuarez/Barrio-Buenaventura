@@ -4,17 +4,13 @@ import Button from './ui/Button'
 import Icon from './ui/Icon'
 import { supabase } from '../lib/supabase'
 import { validarFeedback } from '../lib/validacion'
+import { getCookie, setCookie } from '../lib/cookies'
 
-const FEEDBACK_KEY = 'iglesia_bv_feedback'
+const FEEDBACK_KEY = 'feedback_last'
 
 function yaEnvioHoy() {
-  const guardado = localStorage.getItem(FEEDBACK_KEY)
-  if (!guardado) return false
+  const guardado = getCookie(FEEDBACK_KEY)
   return guardado === new Date().toDateString()
-}
-
-function marcarEnviadoLocal() {
-  localStorage.setItem(FEEDBACK_KEY, new Date().toDateString())
 }
 
 export default function FeedbackFooter({ usuarioId }) {
@@ -37,7 +33,7 @@ export default function FeedbackFooter({ usuarioId }) {
       console.error('Error al enviar feedback:', error)
       return
     }
-    marcarEnviadoLocal()
+    setCookie(FEEDBACK_KEY, new Date().toDateString())
     setEnviado(true)
   }
 

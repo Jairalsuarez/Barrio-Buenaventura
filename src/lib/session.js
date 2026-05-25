@@ -1,37 +1,23 @@
-const SESSION_KEY = 'iglesia_bv_session'
-const GUEST_KEY = 'iglesia_bv_guest'
+import { getCookie, setCookie, removeCookie } from './cookies'
 
-export function getSession() {
-  const raw = localStorage.getItem(SESSION_KEY)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
+export function getNombre() {
+  return getCookie('nombre') || ''
 }
 
-export function setSession(user) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-  localStorage.removeItem(GUEST_KEY)
+export function setNombre(name) {
+  setCookie('nombre', name)
 }
 
-export function clearSession() {
-  localStorage.removeItem(SESSION_KEY)
-  localStorage.removeItem(GUEST_KEY)
+export function clearNombre() {
+  removeCookie('nombre')
 }
 
-export function isGuest() {
-  return localStorage.getItem(GUEST_KEY) === 'true'
+export function getDarkMode() {
+  return getCookie('dark') === true
 }
 
-export function setGuest() {
-  localStorage.setItem(GUEST_KEY, 'true')
-  localStorage.removeItem(SESSION_KEY)
-}
-
-export function isLoggedIn() {
-  return !!getSession() || isGuest()
+export function setDarkMode(dark) {
+  setCookie('dark', dark)
 }
 
 export const LLAMAMIENTOS = [

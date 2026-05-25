@@ -2,19 +2,59 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { supabase } from '../lib/supabase'
+import { esLlamamientoPredefinido } from '../lib/session'
 import Card from './ui/Card'
 import Button from './ui/Button'
 import Input from './ui/Input'
 import Icon from './ui/Icon'
 import Spinner from './ui/Spinner'
+import AdminMiembros from './AdminMiembros'
+import AdminAnuncios from './AdminAnuncios'
+import AdminOrganizaciones from './AdminOrganizaciones'
+import AdminConfiguracion from './AdminConfiguracion'
+
+function getTabsForRole(llamamiento) {
+  const esPredefinido = esLlamamientoPredefinido(llamamiento)
+  if (!esPredefinido) return []
+
+  const isObispo = llamamiento === 'Obispo'
+  const isConsejero = llamamiento === 'Primer Consejero' || llamamiento === 'Segundo Consejero'
+  const isSecretario = llamamiento === 'Secretario de Barrio'
+  const esPresidente = llamamiento.startsWith('President')
+
+  const tabs = [{ id: 'eventos', label: 'Eventos' }]
+
+  if (isObispo || isConsejero || isSecretario) {
+    tabs.push({ id: 'miembros', label: 'Miembros' })
+    tabs.push({ id: 'anuncios', label: 'Anuncios' })
+  }
+
+  if (isObispo || esPresidente) {
+    tabs.push({ id: 'organizacion', label: 'Organización' })
+  }
+
+  tabs.push({ id: 'feedback', label: 'Feedback' })
+
+  if (isObispo) {
+    tabs.push({ id: 'configuracion', label: 'Configuración' })
+  }
+
+  return tabs
+}
 
 export default function AdminPanel({ eventos, loading, error, crear, eliminar, userLlamamiento, userId, isPredefinido }) {
-  const [tab, setTab] = useState('eventos')
+  const [tab, setTab] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', fecha_hora: '', descripcion: '' })
   const [creando, setCreando] = useState(false)
   const [feedbacks, setFeedbacks] = useState([])
   const [loadingFeedback, setLoadingFeedback] = useState(false)
+
+  const tabs = getTabsForRole(userLlamamiento)
+
+  useEffect(() => {
+    if (tabs.length > 0 && !tab) setTab(tabs[0].id)
+  }, [tabs, tab])
 
   useEffect(() => {
     if (tab === 'feedback' && isPredefinido) {
@@ -56,11 +96,6 @@ export default function AdminPanel({ eventos, loading, error, crear, eliminar, u
 
   if (!isPredefinido) return null
 
-  const tabs = [
-    { id: 'eventos', label: 'Eventos' },
-    { id: 'feedback', label: 'Feedback' },
-  ]
-
   return (
     <section className="px-5 py-8 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-6">
@@ -68,16 +103,18 @@ export default function AdminPanel({ eventos, loading, error, crear, eliminar, u
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Administración</h2>
       </div>
 
-      <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1 mb-6">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 ${
-              tab === t.id ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
-            }`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {tabs.length > 1 && (
+        <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1 mb-6 overflow-x-auto">
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 whitespace-nowrap ${
+                tab === t.id ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === 'eventos' && (
         <div>
@@ -132,6 +169,12 @@ export default function AdminPanel({ eventos, loading, error, crear, eliminar, u
         </div>
       )}
 
+      {tab === 'miembros' && <AdminMiembros userId={userId} userLlamamiento={userLlamamiento} />}
+
+      {tab === 'anuncios' && <AdminAnuncios userId={userId} />}
+
+      {tab === 'organizacion' && <AdminOrganizaciones userLlamamiento={userLlamamiento} />}
+
       {tab === 'feedback' && (
         <div>
           <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Comentarios de la comunidad</p>
@@ -158,6 +201,8 @@ export default function AdminPanel({ eventos, loading, error, crear, eliminar, u
           )}
         </div>
       )}
+
+      {tab === 'configuracion' && <AdminConfiguracion />}
     </section>
   )
 }

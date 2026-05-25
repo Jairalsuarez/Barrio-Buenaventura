@@ -1,47 +1,78 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { getSession, setSession, clearSession, isGuest, setGuest, esLlamamientoPredefinido } from '../lib/session'
+import { esLlamamientoPredefinido } from '../lib/session'
 
 export function useAuth() {
-  const stored = getSession()
-  const [user, setUser] = useState(() => stored)
-  const [guest, setGuestState] = useState(() => !stored && isGuest())
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState(null)
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const register = useCallback(async (datos) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s)
+      if (s?.user) {
+        cargarUsuario(s.user.id).then(u => {
+          setUser(u)
+          setLoading(false)
+        })
+      } else {
+        setLoading(false)
+      }
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
+      if (s?.user) {
+        cargarUsuario(s.user.id).then(setUser)
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription?.unsubscribe()
+  }, [])
+
+  async function cargarUsuario(authUserId) {
+    const { data } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle()
+    return data
+  }
+
+  const register = useCallback(async (email, password, profile) => {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: err } = await supabase
-        .rpc('insertar_usuario_seguro', {
-          p_nombre: datos.nombre.trim(),
-          p_apellido: datos.apellido.trim(),
-          p_fecha_nacimiento: datos.fecha_nacimiento,
-          p_telefono: datos.telefono || null,
-          p_llamamiento: datos.llamamiento || 'Ninguno',
-          p_llamamiento_personalizado: datos.llamamiento_personalizado || null,
-          p_tipo_perfil: 'miembro',
-        })
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      if (authErr) throw authErr
+      if (!authData.user) throw new Error('Error al crear la cuenta')
 
-      if (err) throw err
-      if (!data) {
-        setError('Error al crear el registro. Intenta de nuevo.')
-        return null
-      }
+      const { error: linkErr } = await supabase.rpc('vincular_usuario_auth', {
+        p_nombre: profile.nombre.trim(),
+        p_apellido: profile.apellido.trim(),
+        p_fecha_nacimiento: profile.fecha_nacimiento,
+      })
+      if (linkErr) throw linkErr
 
-      const { data: userData, error: fetchErr } = await supabase
+      const { error: updateErr } = await supabase
         .from('usuarios')
-        .select('*')
-        .eq('id', data)
-        .single()
+        .update({
+          telefono: profile.telefono || null,
+          llamamiento: profile.llamamiento || 'Ninguno',
+          llamamiento_personalizado: profile.llamamiento_personalizado || null,
+        })
+        .eq('auth_user_id', authData.user.id)
+      if (updateErr) throw updateErr
 
-      if (fetchErr) throw fetchErr
-
-      setSession(userData)
-      setUser(userData)
-      setGuestState(false)
-      return userData
+      const usuario = await cargarUsuario(authData.user.id)
+      setUser(usuario)
+      return usuario
     } catch (err) {
       setError(err.message)
       return null
@@ -50,35 +81,44 @@ export function useAuth() {
     }
   }, [])
 
-  const loginWithUserData = useCallback((userData) => {
-    setSession(userData)
-    setUser(userData)
-    setGuestState(false)
+  const login = useCallback(async (email, password) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, error: authErr } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (authErr) throw authErr
+      if (!data.user) throw new Error('Error al iniciar sesión')
+
+      const usuario = await cargarUsuario(data.user.id)
+      setUser(usuario)
+      return usuario
+    } catch (err) {
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  const loginAsGuest = useCallback(() => {
-    setGuest()
-    setGuestState(true)
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
     setUser(null)
-  }, [])
-
-  const logout = useCallback(() => {
-    clearSession()
-    setUser(null)
-    setGuestState(false)
+    setSession(null)
   }, [])
 
   const isPredefinido = user ? esLlamamientoPredefinido(user.llamamiento) : false
 
   return {
     user,
-    guest,
+    session,
     loading,
     error,
     isPredefinido,
     register,
-    loginWithUserData,
-    loginAsGuest,
+    login,
     logout,
   }
 }

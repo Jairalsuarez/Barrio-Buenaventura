@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { getCookie, setCookie, removeCookie } from '../lib/cookies'
+import { getNombre } from '../lib/session'
 
-const STORAGE_KEY = 'iglesia_bv_investigator'
+const STORAGE_KEY = 'investigator'
 const COOLDOWN_HOURS = 48
 
 function MapPickerModal({ onSelect, onClose, initialCoords }) {
@@ -42,9 +44,10 @@ function MapPickerModal({ onSelect, onClose, initialCoords }) {
 
     if (window.L) {
       initMap()
-    } else {
+    } else if (!document.querySelector('script[data-leaflet]')) {
       const script = document.createElement('script')
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      script.dataset.leaflet = ''
       script.onload = initMap
       document.body.appendChild(script)
     }
@@ -89,12 +92,12 @@ function MapPickerModal({ onSelect, onClose, initialCoords }) {
 
 function AlreadyView({ onBack, onRetry }) {
   const [remaining, setRemaining] = useState('')
-  const name = localStorage.getItem('iglesia_bv_name') || ''
+  const name = getNombre() || ''
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = getCookie(STORAGE_KEY)
     if (!stored) return
-    const { timestamp } = JSON.parse(stored)
+    const { timestamp } = stored
     const hoursLeft = Math.max(0, COOLDOWN_HOURS - (Date.now() - timestamp) / (1000 * 60 * 60))
     if (hoursLeft <= 0) { setRemaining(''); return }
     setRemaining(`${Math.floor(hoursLeft)}h ${Math.floor((hoursLeft % 1) * 60)}m`)
@@ -106,7 +109,7 @@ function AlreadyView({ onBack, onRetry }) {
         <div className="w-14 h-14 rounded-full bg-white dark:bg-white/8 border border-[#e4dcd0] dark:border-white/10 flex items-center justify-center mx-auto">
           <span className="material-symbols-outlined text-[#8c6a43] text-2xl">handshake</span>
         </div>
-        {name && <p className="mt-4 text-sm text-[#8c6a43] dark:text-[#c6a27b] font-semibold">{name},</p>}
+        {name && <p className="mt-4 text-sm text-[#8c6a43] dark:text-[#c6a27b] font-semibold">{name}</p>}
         <h2 className="text-xl font-bold text-[#1e293b] dark:text-white">ya casi estás listo</h2>
         <p className="text-sm text-[#64748b] dark:text-slate-400 mt-2 leading-relaxed">
           Pronto los misioneros te contactarán para que conozcas más.
@@ -131,9 +134,9 @@ export default function PageNuevos({ onBack }) {
   const [coords, setCoords] = useState(null)
   const [showMap, setShowMap] = useState(false)
 
-  const stored = localStorage.getItem(STORAGE_KEY)
-  const alreadySubmitted = stored && Date.now() - JSON.parse(stored).timestamp < COOLDOWN_HOURS * 60 * 60 * 1000
-  const userName = localStorage.getItem('iglesia_bv_name') || ''
+  const stored = (() => { try { return getCookie(STORAGE_KEY) } catch { return null } })()
+
+  const userName = getNombre() || ''
 
   function handleMapSelect(c) {
     setCoords(c)
@@ -189,7 +192,7 @@ export default function PageNuevos({ onBack }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timestamp: Date.now(), nombre, ciudad, telefono, direccion, coords }))
+    setCookie(STORAGE_KEY, { timestamp: Date.now(), nombre, ciudad, telefono, direccion, coords })
     let texto = `🆕 Nuevo investigador!\n\nNombre: ${nombre}\nCiudad: ${ciudad}\nTeléfono: ${telefono}\nDirección: ${direccion || 'No especificada'}`
     if (coords) texto += `\nGoogle Maps: https://www.google.com/maps?q=${coords.lat},${coords.lng}`
     window.open(`https://wa.me/593987321144?text=${encodeURIComponent(texto)}`, '_blank')
@@ -201,7 +204,7 @@ export default function PageNuevos({ onBack }) {
   }
 
   function handleRetry() {
-    localStorage.removeItem(STORAGE_KEY); setNombre(''); setCiudad(''); setTelefono(''); setDireccion(''); setCoords(null); setStep('form')
+    removeCookie(STORAGE_KEY); setNombre(''); setCiudad(''); setTelefono(''); setDireccion(''); setCoords(null); setStep('form')
   }
 
   if (step === 'already-submitted') return <AlreadyView onBack={() => setStep('welcome')} onRetry={handleRetry} />
@@ -213,7 +216,7 @@ export default function PageNuevos({ onBack }) {
           <div className="w-14 h-14 rounded-full bg-white dark:bg-white/8 border border-[#e4dcd0] dark:border-white/10 flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-[#8c6a43] text-2xl">favorite</span>
           </div>
-          {userName && <p className="mt-4 text-sm text-[#8c6a43] dark:text-[#c6a27b] font-semibold">{userName},</p>}
+          {userName && <p className="mt-4 text-sm text-[#8c6a43] dark:text-[#c6a27b] font-semibold">{userName}</p>}
           <h2 className="text-xl font-bold text-[#1e293b] dark:text-white">registro completado</h2>
           <p className="text-sm text-[#64748b] dark:text-slate-400 mt-2 leading-relaxed">
             Espera a que los misioneros se pongan en contacto contigo. Siempre serás bienvenido en la capilla.

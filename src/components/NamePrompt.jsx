@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { setNombre } from '../lib/session'
 
 export default function NamePrompt({ onSave }) {
   const [nombre, setNombre] = useState('')
@@ -17,7 +18,7 @@ export default function NamePrompt({ onSave }) {
     e.preventDefault()
     const trimmed = nombre.trim()
     if (!trimmed) return
-    localStorage.setItem('iglesia_bv_name', trimmed)
+    setNombre(trimmed)
     onSave(trimmed)
   }
 

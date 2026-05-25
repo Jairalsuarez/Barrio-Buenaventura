@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { getCookie, setCookie } from '../lib/cookies'
 import { getFraseDelDia } from '../lib/frases'
 
 function wrapText(ctx, text, maxWidth) {
@@ -168,30 +169,12 @@ function getScriptureLengthClass(texto) {
 }
 
 export default function EscrituraCard() {
-  const [liked, setLiked] = useState(() => localStorage.getItem('iglesia_bv_scripture_liked') === 'true')
-  const [sharing, setSharing] = useState(false)
-  const [shareBlob, setShareBlob] = useState(null)
-  const cardRef = useRef(null)
-  const frase = getFraseDelDia()
-  const textSizeClass = getScriptureLengthClass(frase.texto)
+  const [liked, setLiked] = useState(() => getCookie('scripture_liked') === true)
 
   useEffect(() => {
-    let cancelled = false
-    generarImagen(frase).then((blob) => {
-      if (!cancelled) setShareBlob(blob)
-    }).catch((e) => {
-      if (!cancelled) console.error(e)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [frase])
-
-  const toggleLike = () => {
     const next = !liked
-    setLiked(next)
-    localStorage.setItem('iglesia_bv_scripture_liked', next)
-  }
+    setCookie('scripture_liked', next)
+  }, [liked])
 
   const compartir = useCallback(async () => {
     if (!shareBlob) return

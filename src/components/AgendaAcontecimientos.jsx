@@ -3,6 +3,7 @@ import { format, differenceInDays, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Card from './ui/Card'
 import Button from './ui/Button'
+import { getCookie, setCookie } from '../lib/cookies'
 import Input from './ui/Input'
 import Spinner from './ui/Spinner'
 import Modal from './ui/Modal'
@@ -264,10 +265,10 @@ export default function AgendaAcontecimientos({ userId, isPredefinido, userLlama
       const delay = reminderTime - now
       if (delay > 0 && delay < 7 * 24 * 60 * 60 * 1000) {
         const sentKey = keyBase + ev.id
-        if (localStorage.getItem(sentKey)) return
+        if (getCookie(sentKey)) return
         const timer = setTimeout(() => {
           try { new Notification('Recordatorio', { body: `"${ev.nombre}" comienza en 5 minutos`, icon: '/icono-barrio-sin fondo.svg' }) } catch {}
-          localStorage.setItem(sentKey, '1')
+          setCookie(sentKey, true, 7 * 24 * 60 * 60)
           if (navigator.serviceWorker?.controller) {
             navigator.serviceWorker.controller.postMessage({
               type: 'SCHEDULE_REMINDER',

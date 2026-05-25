@@ -1,273 +1,118 @@
-import { useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
-import Button from './ui/Button'
-import Input from './ui/Input'
-import Select from './ui/Select'
-import { LLAMAMIENTOS, esLlamamientoPredefinido } from '../lib/session'
-import { validarNombreCompleto, validarTelefono, validarLlamamientoPersonalizado, sanitizarNombre } from '../lib/validacion'
+import { useState } from 'react'
+import { LLAMAMIENTOS } from '../lib/session'
 
-export default function AuthModal({ onRegister, onLoginExisting, onGuest, loading, error }) {
-  const [step, setStep] = useState('nombre')
-  const [nombreCompleto, setNombreCompleto] = useState('')
-  const [nombre, setNombre] = useState('')
-  const [apellido, setApellido] = useState('')
-  const [fechaNacimiento, setFechaNacimiento] = useState('')
-  const [tieneLlamamiento, setTieneLlamamiento] = useState(false)
-  const [llamamiento, setLlamamiento] = useState('')
-  const [llamamientoPersonalizado, setLlamamientoPersonalizado] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [errMsg, setErrMsg] = useState('')
-  const [checking, setChecking] = useState(false)
+export default function AuthModal({ onLogin, onRegister, onClose, loading, error }) {
+  const [mode, setMode] = useState('login')
+  const [form, setForm] = useState({
+    email: '', password: '', confirmPassword: '',
+    nombre: '', apellido: '', fecha_nacimiento: '',
+    telefono: '', llamamiento: 'Ninguno', llamamiento_personalizado: '',
+  })
 
-  function handleNombreChange(raw) {
-    const soloValido = raw.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '')
-    setNombreCompleto(soloValido)
-    setErrMsg('')
+  function handleChange(key, value) {
+    setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  async function handleNombreContinue() {
-    const err = validarNombreCompleto(nombreCompleto)
-    if (err) {
-      setErrMsg(err)
-      return
-    }
-    const partes = sanitizarNombre(nombreCompleto).split(' ')
-    const nombreVal = partes[0]
-    const apellidoVal = partes[1]
-
-    setChecking(true)
-    setErrMsg('')
-    try {
-      const nombreUpper = nombreVal.charAt(0).toUpperCase() + nombreVal.slice(1).toLowerCase()
-      const apellidoUpper = apellidoVal.charAt(0).toUpperCase() + apellidoVal.slice(1).toLowerCase()
-      const { data, error: searchErr } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('nombre', nombreUpper)
-        .eq('apellido', apellidoUpper)
-        .limit(1)
-        .maybeSingle()
-
-      if (searchErr) throw searchErr
-
-      if (data) {
-        onLoginExisting(data)
-        return
-      }
-
-      setNombre(nombreVal)
-      setApellido(apellidoVal)
-      setStep('cumpleanos')
-    } catch (e) {
-      setErrMsg('Error al verificar. Intenta de nuevo.')
-    } finally {
-      setChecking(false)
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (mode === 'login') {
+      onLogin(form.email, form.password)
+    } else {
+      if (form.password !== form.confirmPassword) return
+      onRegister(form.email, form.password, {
+        nombre: form.nombre,
+        apellido: form.apellido,
+        fecha_nacimiento: form.fecha_nacimiento,
+        telefono: form.telefono,
+        llamamiento: form.llamamiento,
+        llamamiento_personalizado: form.llamamiento === 'Otro' ? form.llamamiento_personalizado : null,
+      })
     }
   }
 
-  function handleCumpleanosContinue() {
-    if (!fechaNacimiento) {
-      setErrMsg('La fecha de nacimiento es obligatoria')
-      return
-    }
-    const fecha = new Date(fechaNacimiento)
-    const hoy = new Date()
-    if (fecha > hoy) {
-      setErrMsg('La fecha no puede ser futura')
-      return
-    }
-    setErrMsg('')
-    setStep('llamamiento')
-  }
-
-  function handleLlamamientoToggle(e) {
-    const checked = e.target.checked
-    setTieneLlamamiento(checked)
-    if (!checked) {
-      setLlamamiento('')
-      setTelefono('')
-      setLlamamientoPersonalizado('')
-    }
-  }
-
-  async function handleRegistrar() {
-    const formData = {
-      nombre: sanitizarNombre(nombre),
-      apellido: sanitizarNombre(apellido),
-      fecha_nacimiento: fechaNacimiento,
-      telefono: telefono || null,
-      llamamiento: llamamiento || null,
-      llamamiento_personalizado: llamamientoPersonalizado
-        ? sanitizarNombre(llamamientoPersonalizado)
-        : null,
-    }
-
-    if (llamamiento && esLlamamientoPredefinido(llamamiento)) {
-      const errTel = validarTelefono(telefono)
-      if (errTel) {
-        setErrMsg(errTel)
-        return
-      }
-    }
-    if (llamamiento === 'Otro') {
-      const errLlam = validarLlamamientoPersonalizado(llamamientoPersonalizado)
-      if (errLlam) {
-        setErrMsg(errLlam)
-        return
-      }
-    }
-
-    setErrMsg('')
-    await onRegister(formData)
-  }
-
-  const bgLogos = [
-    '-top-20 -right-20 w-72 h-72 -rotate-12',
-    '-bottom-32 -left-20 w-96 h-96 rotate-45',
-    'top-1/2 -right-16 w-48 h-48 rotate-[30deg]',
-    'top-1/3 -left-16 w-40 h-40 -rotate-[60deg]',
-    'bottom-1/4 right-1/4 w-32 h-32 rotate-[15deg]',
-  ]
+  const valido = mode === 'login'
+    ? form.email && form.password
+    : form.email && form.password && form.confirmPassword && form.password === form.confirmPassword
+      && form.nombre && form.apellido && form.fecha_nacimiento
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-warm-50 dark:bg-slate-950 overflow-y-auto">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {bgLogos.map((pos, i) => (
-          <img
-            key={i}
-            src="/icono-barrio-sin fondo.svg"
-            alt=""
-            className={`absolute ${pos} opacity-[0.08] dark:opacity-[0.06]`}
-            aria-hidden="true"
-          />
-        ))}
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-3xl bg-[#faf7f2] dark:bg-[#18181b] shadow-2xl overflow-hidden">
+        <div className="relative px-6 pt-8 pb-6">
+          <button onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>close</span>
+          </button>
 
-      <div className="flex-1 flex flex-col justify-center px-6 max-w-sm mx-auto w-full relative">
-        <div className="text-center mb-8">
-          <h1 className={`font-bold text-gray-900 dark:text-white transition-all duration-500 ${step === 'nombre' ? 'text-2xl' : 'text-lg'}`}>
-            Barrio Buenaventura
-          </h1>
-
-        </div>
-
-        {(error || errMsg) && (
-          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3 mb-4">
-            {error || errMsg}
+          <div className="flex justify-center mb-6">
+            <img src="/icono-barrio-sin fondo.svg" alt="" className="h-12 w-12 object-contain opacity-80" />
           </div>
-        )}
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm dark:shadow-slate-900/50 p-6 transition-all duration-300">
-          {step === 'nombre' && (
-            <div className="animate-fade-up">
-              <Input
-                label="¿Cuál es tu nombre?"
-                name="nombreCompleto"
-                placeholder="Ej: Juan Pérez"
-                value={nombreCompleto}
-                onChange={(e) => handleNombreChange(e.target.value)}
-                autoComplete="name"
-                autoFocus
-              />
-              <div className="mt-4">
-                <Button fullWidth onClick={handleNombreContinue} disabled={checking}>
-                  {checking ? 'Verificando...' : 'Continuar'}
-                </Button>
-              </div>
-              <div className="relative my-5">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-slate-600" /></div>
-                <div className="relative flex justify-center"><span className="bg-white dark:bg-slate-800 px-3 text-xs text-gray-400 dark:text-slate-500">o</span></div>
-              </div>
-              <Button variant="ghost" fullWidth onClick={onGuest}>
-                Entrar como invitado
-              </Button>
+          <div className="flex bg-gray-100 dark:bg-slate-800 rounded-2xl p-1 mb-6">
+            <button onClick={() => setMode('login')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                mode === 'login' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700'
+              }`}>Iniciar sesión</button>
+            <button onClick={() => setMode('register')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                mode === 'register' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700'
+              }`}>Registrarse</button>
+          </div>
+
+          {error && (
+            <div className="mb-4 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-xs font-medium text-red-600 dark:text-red-400 text-center">
+              {error}
             </div>
           )}
 
-          {step === 'cumpleanos' && (
-            <div className="animate-fade-up">
-              <Input
-                label="¿Cuál es tu fecha de nacimiento?"
-                name="fecha_nacimiento"
-                type="date"
-                value={fechaNacimiento}
-                onChange={(e) => { setFechaNacimiento(e.target.value); setErrMsg('') }}
-                autoFocus
-              />
-              <div className="flex gap-2 mt-4">
-                <Button variant="ghost" onClick={() => setStep('nombre')}>Atrás</Button>
-                <div className="flex-1"><Button fullWidth onClick={handleCumpleanosContinue}>Continuar</Button></div>
-              </div>
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input type="email" placeholder="Correo electrónico" value={form.email} onChange={e => handleChange('email', e.target.value)}
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
 
-          {step === 'llamamiento' && (
-            <div className="animate-fade-up">
-              <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Casi listo. Cuéntanos un poco más:</p>
+            <input type="password" placeholder="Contraseña" value={form.password} onChange={e => handleChange('password', e.target.value)}
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
 
-              <div className="flex items-center gap-3 mb-4">
-                <input
-                  type="checkbox"
-                  id="tieneLlamamiento"
-                  checked={tieneLlamamiento}
-                  onChange={handleLlamamientoToggle}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-warm-600 focus:ring-warm-500 dark:bg-slate-700"
-                />
-                <label htmlFor="tieneLlamamiento" className="text-sm text-gray-700 dark:text-slate-300 font-medium">
-                  ¿Tienes un llamamiento?
-                </label>
-              </div>
+            {mode === 'register' && (
+              <>
+                <input type="password" placeholder="Confirmar contraseña" value={form.confirmPassword} onChange={e => handleChange('confirmPassword', e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
 
-              {tieneLlamamiento && (
-                <div className="space-y-3.5">
-                  <Select
-                    label="Llamamiento"
-                    name="llamamiento"
-                    placeholder="Selecciona tu llamamiento"
-                    options={LLAMAMIENTOS}
-                    value={llamamiento}
-                    onChange={(e) => { setLlamamiento(e.target.value); setErrMsg('') }}
-                  />
-                  {llamamiento === 'Otro' && (
-                    <Input
-                      label="Especifica tu llamamiento"
-                      name="llamamiento_personalizado"
-                      placeholder="Ej: Director de música"
-                      value={llamamientoPersonalizado}
-                      onChange={(e) => setLlamamientoPersonalizado(e.target.value)}
-                    />
-                  )}
-                  {esLlamamientoPredefinido(llamamiento) && (
-                    <>
-                      <Input
-                        label="Teléfono"
-                        name="telefono"
-                        type="tel"
-                        placeholder="+593 99 999 9999"
-                        value={telefono}
-                        onChange={(e) => { setTelefono(e.target.value); setErrMsg('') }}
-                      />
-                      <p className="text-xs text-warm-600 dark:text-warm-400 bg-warm-50 dark:bg-warm-950 rounded-lg px-3 py-2">
-                        El teléfono es importante para que los miembros puedan ponerse en contacto con el líder que corresponda.
-                      </p>
-                    </>
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-3">
+                  <p className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-2">Datos del miembro</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="Nombre" value={form.nombre} onChange={e => handleChange('nombre', e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
+                    <input type="text" placeholder="Apellido" value={form.apellido} onChange={e => handleChange('apellido', e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
+                  </div>
+                  <input type="date" value={form.fecha_nacimiento} onChange={e => handleChange('fecha_nacimiento', e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" required />
+
+                  <input type="tel" placeholder="Teléfono (opcional)" value={form.telefono} onChange={e => handleChange('telefono', e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" />
+
+                  <select value={form.llamamiento} onChange={e => handleChange('llamamiento', e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors">
+                    <option value="Ninguno">Sin llamamiento</option>
+                    {LLAMAMIENTOS.map(l => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+
+                  {form.llamamiento === 'Otro' && (
+                    <input type="text" placeholder="Describa su llamamiento..." value={form.llamamiento_personalizado} onChange={e => handleChange('llamamiento_personalizado', e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-warm-500/40 transition-colors" />
                   )}
                 </div>
-              )}
+              </>
+            )}
 
-              <div className="flex gap-2 mt-4">
-                <Button variant="ghost" onClick={() => setStep('cumpleanos')}>Atrás</Button>
-                <div className="flex-1"><Button fullWidth onClick={handleRegistrar} disabled={loading}>
-                  {loading ? 'Registrando...' : 'Registrarme'}
-                </Button></div>
-              </div>
-            </div>
-          )}
+            <button type="submit" disabled={!valido || loading}
+              className="w-full py-3 rounded-xl bg-[#8c6a43] text-white text-sm font-bold hover:bg-[#a0784d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? 'Cargando...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            </button>
+          </form>
         </div>
-
-        <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-6">
-          Tu sesión quedará abierta en este dispositivo
-        </p>
       </div>
     </div>
   )
